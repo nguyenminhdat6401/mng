@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Nhập - NMD Management</title>
+    <link rel="icon" type="image/png" href="img/logo2.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            100: '#1a1a1a',
+                            200: '#2d2d2d',
+                            300: '#3d3d3d',
+                            400: '#4d4d4d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .error-message {
+            transition: opacity 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-dark-100 text-gray-800 dark:text-gray-200 min-h-screen transition-colors duration-300 flex items-center justify-center">
+    <div class="container mx-auto px-4 py-8 max-w-md w-full">
+        <div class="bg-white dark:bg-dark-200 rounded-lg shadow-lg p-6 fade-in">
+            <header class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+                    <i class="fas fa-clock mr-2"></i> NMD Management
+                </h1>
+                <button id="darkModeToggle" class="p-2 rounded-full bg-gray-200 dark:bg-dark-300 hover:bg-gray-300 dark:hover:bg-dark-400 transition-colors">
+                    <i class="fas fa-moon dark:hidden"></i>
+                    <i class="fas fa-sun hidden dark:block"></i>
+                </button>
+            </header>
+
+            <!-- Form Toggle Buttons -->
+            <div class="flex justify-center space-x-4 mb-6">
+                <button id="showLoginForm" class="px-4 py-2 bg-indigo-600 dark:bg-indigo-700 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors">
+                    Đăng Nhập
+                </button>
+                <button id="showRegisterForm" class="px-4 py-2 bg-gray-500 dark:bg-gray-600 text-white rounded-lg hover:bg-gray-600 dark:hover:bg-gray-500 transition-colors">
+                    Đăng Ký
+                </button>
+            </div>
+
+            <!-- Error Message -->
+            <div id="errorMessage" class="hidden error-message bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 p-3 rounded-lg mb-4">
+                <!-- Error message will be set by JS -->
+            </div>
+
+            <!-- Login Form -->
+            <div id="loginForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Tên Đăng Nhập</label>
+                    <input type="text" id="loginUsername" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300" placeholder="Nhập tên đăng nhập">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Mật Khẩu</label>
+                    <input type="password" id="loginPassword" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300" placeholder="Nhập mật khẩu">
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="rememberMe" class="mr-2">
+                    <label for="rememberMe" class="text-sm">Ghi nhớ đăng nhập</label>
+                </div>
+                <div class="flex justify-end">
+                    <button id="loginButton" class="px-4 py-2 bg-indigo-600 dark:bg-indigo-700 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors">
+                        <i class="fas fa-sign-in-alt mr-2"></i> Đăng Nhập
+                    </button>
+                </div>
+            </div>
+
+            <!-- Registration Form -->
+            <div id="registerForm" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Tên Đăng Nhập</label>
+                    <input type="text" id="registerUsername" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300" placeholder="Nhập tên đăng nhập">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Mật Khẩu</label>
+                    <input type="password" id="registerPassword" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300" placeholder="Nhập mật khẩu">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Xác Nhận Mật Khẩu</label>
+                    <input type="password" id="confirmPassword" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300" placeholder="Xác nhận mật khẩu">
+                </div>
+                <div class="flex justify-end">
+                    <button id="registerButton" class="px-4 py-2 bg-green-500 dark:bg-green-600 text-white rounded-lg hover:bg-green-600 dark:hover:bg-green-500 transition-colors">
+                        <i class="fas fa-user-plus mr-2"></i> Đăng Ký
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple SHA-256 implementation (for client-side hashing)
+        async function sha256(str) {
+            const msgBuffer = new TextEncoder().encode(str);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // Generate a random token for "Remember Me"
+        function generateToken() {
+            return Math.random().toString(36).substring(2) + Date.now().toString(36);
+        }
+
+        // DOM Elements
+        const showLoginFormBtn = document.getElementById('showLoginForm');
+        const showRegisterFormBtn = document.getElementById('showRegisterForm');
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const loginUsernameInput = document.getElementById('loginUsername');
+        const loginPasswordInput = document.getElementById('loginPassword');
+        const rememberMeCheckbox = document.getElementById('rememberMe');
+        const loginButton = document.getElementById('loginButton');
+        const registerUsernameInput = document.getElementById('registerUsername');
+        const registerPasswordInput = document.getElementById('registerPassword');
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+        const registerButton = document.getElementById('registerButton');
+        const errorMessage = document.getElementById('errorMessage');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+
+        // Initialize users
+        let users = JSON.parse(localStorage.getItem('nmd_users')) || {};
+
+        // Check for remembered login
+        const savedToken = localStorage.getItem('nmd_remember_token');
+        const savedUsername = localStorage.getItem('nmd_current_user');
+        if (savedToken && savedUsername && users[savedUsername] && users[savedUsername].token === savedToken) {
+            window.location.href = 'index.html';
+        }
+
+        // Form toggle handlers
+        showLoginFormBtn.addEventListener('click', () => {
+            loginForm.classList.remove('hidden');
+            registerForm.classList.add('hidden');
+            errorMessage.classList.add('hidden');
+            showLoginFormBtn.classList.add('bg-indigo-600', 'dark:bg-indigo-700');
+            showLoginFormBtn.classList.remove('bg-gray-500', 'dark:bg-gray-600');
+            showRegisterFormBtn.classList.add('bg-gray-500', 'dark:bg-gray-600');
+            showRegisterFormBtn.classList.remove('bg-indigo-600', 'dark:bg-indigo-700');
+        });
+
+        showRegisterFormBtn.addEventListener('click', () => {
+            registerForm.classList.remove('hidden');
+            loginForm.classList.add('hidden');
+            errorMessage.classList.add('hidden');
+            showRegisterFormBtn.classList.add('bg-indigo-600', 'dark:bg-indigo-700');
+            showRegisterFormBtn.classList.remove('bg-gray-500', 'dark:bg-gray-600');
+            showLoginFormBtn.classList.add('bg-gray-500', 'dark:bg-gray-600');
+            showLoginFormBtn.classList.remove('bg-indigo-600', 'dark:bg-indigo-700');
+        });
+
+        // Login handler
+        loginButton.addEventListener('click', async () => {
+            const username = loginUsernameInput.value.trim();
+            const password = loginPasswordInput.value;
+
+            if (!username || !password) {
+                errorMessage.textContent = 'Vui lòng nhập tên đăng nhập và mật khẩu.';
+                errorMessage.classList.remove('hidden');
+                return;
+            }
+
+            const passwordHash = await sha256(password);
+            if (users[username] && users[username].passwordHash === passwordHash) {
+                // Successful login
+                localStorage.setItem('nmd_current_user', username);
+                if (rememberMeCheckbox.checked) {
+                    const token = generateToken();
+                    users[username].token = token;
+                    localStorage.setItem('nmd_remember_token', token);
+                    localStorage.setItem('nmd_users', JSON.stringify(users));
+                }
+                window.location.href = 'index.html';
+            } else {
+                errorMessage.textContent = 'Tên đăng nhập hoặc mật khẩu không đúng.';
+                errorMessage.classList.remove('hidden');
+            }
+        });
+
+        // Registration handler
+        registerButton.addEventListener('click', async () => {
+            const username = registerUsernameInput.value.trim();
+            const password = registerPasswordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+
+            if (!username || !password || !confirmPassword) {
+                errorMessage.textContent = 'Vui lòng điền đầy đủ thông tin.';
+                errorMessage.classList.remove('hidden');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                errorMessage.textContent = 'Mật khẩu xác nhận không khớp.';
+                errorMessage.classList.remove('hidden');
+                return;
+            }
+
+            if (users[username]) {
+                errorMessage.textContent = 'Tên đăng nhập đã tồn tại.';
+                errorMessage.classList.remove('hidden');
+                return;
+            }
+
+            const passwordHash = await sha256(password);
+            users[username] = { passwordHash: passwordHash, token: null };
+            localStorage.setItem('nmd_users', JSON.stringify(users));
+
+            // Auto-login after registration
+            localStorage.setItem('nmd_current_user', username);
+            window.location.href = 'index.html';
+        });
+
+        // Dark mode toggle
+        darkModeToggle.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('darkMode', document.documentElement.classList.contains('dark'));
+        });
+
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark');
+        }
+
+        // Initialize with login form visible
+        showLoginFormBtn.classList.add('bg-indigo-600', 'dark:bg-indigo-700');
+        showRegisterFormBtn.classList.add('bg-gray-500', 'dark:bg-gray-600');
+    </script>
+</body>
+</html>

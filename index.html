@@ -100,6 +100,9 @@
                         <!-- Các tháng sẽ được thêm bởi JS -->
                     </div>
                 </div>
+                <button id="logoutButton" class="px-4 py-2 bg-red-500 dark:bg-red-600 text-white rounded-lg hover:bg-red-600 dark:hover:bg-red-500 transition-colors">
+                    <i class="fas fa-sign-out-alt mr-2"></i> Đăng Xuất
+                </button>
             </div>
         </header>
 
@@ -218,12 +221,20 @@
     </div>
 
     <script>
+        // Check authentication
+        const currentUser = localStorage.getItem('nmd_current_user');
+        const savedToken = localStorage.getItem('nmd_remember_token');
+        const users = JSON.parse(localStorage.getItem('nmd_users')) || {};
+        if (!currentUser || (savedToken && !users[currentUser]) || (savedToken && users[currentUser].token !== savedToken)) {
+            window.location.href = 'login.html';
+        }
+
         // Ngày hiện tại
         let currentDate = new Date();
         let currentMonth = currentDate.getMonth();
         let currentYear = currentDate.getFullYear();
         let selectedDate = null;
-        let notes = JSON.parse(localStorage.getItem('advancedTimeManagerNotes')) || {};
+        let notes = JSON.parse(localStorage.getItem(`advancedTimeManagerNotes_${currentUser}`)) || {};
         let currentlyEditingNoteIndex = null;
 
         // Các phần tử DOM
@@ -250,6 +261,7 @@
         const closeNotesList = document.getElementById('closeNotesList');
         const addNewNote = document.getElementById('addNewNote');
         const financeNavButton = document.getElementById('financeNavButton');
+        const logoutButton = document.getElementById('logoutButton');
 
         // Khởi tạo lịch
         function initCalendar() {
@@ -570,7 +582,7 @@
                     return 0;
                 });
                 
-                localStorage.setItem('advancedTimeManagerNotes', JSON.stringify(notes));
+                localStorage.setItem(`advancedTimeManagerNotes_${currentUser}`, JSON.stringify(notes));
             }
             
             renderCalendar();
@@ -592,11 +604,18 @@
                 delete notes[dateKey];
             }
             
-            localStorage.setItem('advancedTimeManagerNotes', JSON.stringify(notes));
+            localStorage.setItem(`advancedTimeManagerNotes_${currentUser}`, JSON.stringify(notes));
             renderCalendar();
             noteModal.classList.add('hidden');
             currentlyEditingNoteIndex = null;
         }
+
+        // Đăng xuất
+        logoutButton.addEventListener('click', () => {
+            localStorage.removeItem('nmd_current_user');
+            localStorage.removeItem('nmd_remember_token');
+            window.location.href = 'login.html';
+        });
 
         // Các sự kiện lắng nghe
         prevMonthBtn.addEventListener('click', () => {
