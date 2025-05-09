@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NMD FinanceManagement</title>
+    <link rel="icon" type="image/png" href="img/logo2.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            100: '#1a1a1a',
+                            200: '#2d2d2d',
+                            300: '#3d3d3d',
+                            400: '#4d4d4d',
+                        },
+                        transaction: {
+                            income: '#4ade80',
+                            expense: '#f87171',
+                            savings: '#60a5fa',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .transaction-item {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .transaction-item:hover {
+            transform: translateX(2px);
+        }
+        .modal {
+            transition: all 0.3s ease;
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        .category-tag {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-right: 4px;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .chart-container {
+            max-width: 100%;
+            height: 200px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-dark-100 text-gray-800 dark:text-gray-200 min-h-screen transition-colors duration-300">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
+                <i class="fas fa-wallet mr-2"></i> NMD FinanceManagement
+            </h1>
+            <div class="flex items-center space-x-4">
+                <button id="timeNavButton" class="px-4 py-2 bg-indigo-600 dark:bg-indigo-700 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors">
+                    <i class="fas fa-clock mr-2"></i> Quản Lý Thời Gian
+                </button>
+                <button id="darkModeToggle" class="p-2 rounded-full bg-gray-200 dark:bg-dark-300 hover:bg-gray-300 dark:hover:bg-dark-400 transition-colors">
+                    <i class="fas fa-moon dark:hidden"></i>
+                    <i class="fas fa-sun hidden dark:block"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Summary Section -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div class="bg-white dark:bg-dark-200 p-4 rounded-lg shadow">
+                <h3 class="text-lg font-semibold mb-2">Tổng Thu Nhập</h3>
+                <p id="totalIncome" class="text-2xl font-bold text-transaction-income">0 VND</p>
+            </div>
+            <div class="bg-white dark:bg-dark-200 p-4 rounded-lg shadow">
+                <h3 class="text-lg font-semibold mb-2">Tổng Chi Tiêu</h3>
+                <p id="totalExpense" class="text-2xl font-bold text-transaction-expense">0 VND</p>
+            </div>
+            <div class="bg-white dark:bg-dark-200 p-4 rounded-lg shadow">
+                <h3 class="text-lg font-semibold mb-2">Số Dư</h3>
+                <p id="balance" class="text-2xl font-bold text-transaction-savings">0 VND</p>
+            </div>
+        </div>
+        <div class="flex justify-end mb-8">
+            <button id="resetTransactions" class="px-4 py-2 bg-red-500 dark:bg-red-600 text-white rounded-lg hover:bg-red-600 dark:hover:bg-red-500 transition-colors">
+                <i class="fas fa-undo mr-2"></i> Đặt Lại Tất Cả
+            </button>
+        </div>
+
+        <!-- Transaction Form -->
+        <div class="bg-white dark:bg-dark-200 p-6 rounded-lg shadow mb-8">
+            <h2 class="text-xl font-semibold mb-4">Thêm Giao Dịch</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Loại Giao Dịch</label>
+                    <select id="transactionType" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300">
+                        <option value="income">Thu Nhập</option>
+                        <option value="expense">Chi Tiêu</option>
+                        <option value="savings">Tiết Kiệm</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Số Tiền</label>
+                    <input type="number" id="transactionAmount" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300" placeholder="Nhập số tiền">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Danh Mục</label>
+                    <select id="transactionCategory" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300">
+                        <option value="salary">Lương</option>
+                        <option value="food">Ăn Uống</option>
+                        <option value="transport">Di Chuyển</option>
+                        <option value="entertainment">Giải Trí</option>
+                        <option value="bills">Hóa Đơn</option>
+                        <option value="savings">Tiết Kiệm</option>
+                        <option value="other">Khác</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Ngày</label>
+                    <input type="date" id="transactionDate" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300">
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium mb-1">Ghi Chú</label>
+                    <textarea id="transactionNote" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300" placeholder="Ghi chú (tùy chọn)"></textarea>
+                </div>
+                <div class="col-span-2 flex justify-end">
+                    <button id="addTransaction" class="px-4 py-2 bg-indigo-600 dark:bg-indigo-700 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors">
+                        Thêm Giao Dịch
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaction List -->
+        <div class="bg-white dark:bg-dark-200 p-6 rounded-lg shadow">
+            <h2 class="text-xl font-semibold mb-4">Lịch Sử Giao Dịch</h2>
+            <div id="transactionList" class="space-y-4 max-h-96 overflow-y-auto">
+                <!-- Transactions will be added here -->
+            </div>
+        </div>
+
+        <!-- Transaction Modal -->
+        <div id="transactionModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="modal bg-white dark:bg-dark-200 rounded-lg p-6 w-full max-w-md fade-in">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold">Chỉnh Sửa Giao Dịch</h3>
+                    <button id="closeTransactionModal" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Loại Giao Dịch</label>
+                        <select id="editTransactionType" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300">
+                            <option value="income">Thu Nhập</option>
+                            <option value="expense">Chi Tiêu</option>
+                            <option value="savings">Tiết Kiệm</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Số Tiền</label>
+                        <input type="number" id="editTransactionAmount" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Danh Mục</label>
+                        <select id="editTransactionCategory" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300">
+                            <option value="salary">Lương</option>
+                            <option value="food">Ăn Uống</option>
+                            <option value="transport">Di Chuyển</option>
+                            <option value="entertainment">Giải Trí</option>
+                            <option value="bills">Hóa Đơn</option>
+                            <option value="savings">Tiết Kiệm</option>
+                            <option value="other">Khác</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Ngày</label>
+                        <input type="date" id="editTransactionDate" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Ghi Chú</label>
+                        <textarea id="editTransactionNote" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300"></textarea>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-4">
+                    <button id="deleteTransaction" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+                        Xóa
+                    </button>
+                    <button id="saveTransaction" class="px-4 py-2 bg-indigo-600 dark:bg-indigo-700 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors">
+                        Lưu
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reset Confirmation Modal -->
+        <div id="resetConfirmModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="modal bg-white dark:bg-dark-200 rounded-lg p-6 w-full max-w-md fade-in">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold">Xác Nhận Đặt Lại</h3>
+                    <button id="closeResetModal" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <p class="mb-4">Bạn có chắc chắn muốn đặt lại tất cả giao dịch? Hành động này sẽ xóa toàn bộ lịch sử giao dịch và không thể hoàn tác.</p>
+                <div class="flex justify-end space-x-3">
+                    <button id="cancelReset" class="px-4 py-2 bg-gray-500 dark:bg-gray-600 text-white rounded-lg hover:bg-gray-600 dark:hover:bg-gray-500 transition-colors">
+                        Hủy
+                    </button>
+                    <button id="confirmReset" class="px-4 py-2 bg-red-500 dark:bg-red-600 text-white rounded-lg hover:bg-red-600 dark:hover:bg-red-500 transition-colors">
+                        Xác Nhận
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let transactions = JSON.parse(localStorage.getItem('financeManagerTransactions')) || [];
+        let editingTransactionIndex = null;
+
+        // DOM Elements
+        const totalIncome = document.getElementById('totalIncome');
+        const totalExpense = document.getElementById('totalExpense');
+        const balance = document.getElementById('balance');
+        const transactionType = document.getElementById('transactionType');
+        const transactionAmount = document.getElementById('transactionAmount');
+        const transactionCategory = document.getElementById('transactionCategory');
+        const transactionDate = document.getElementById('transactionDate');
+        const transactionNote = document.getElementById('transactionNote');
+        const addTransaction = document.getElementById('addTransaction');
+        const transactionList = document.getElementById('transactionList');
+        const transactionModal = document.getElementById('transactionModal');
+        const closeTransactionModal = document.getElementById('closeTransactionModal');
+        const saveTransaction = document.getElementById('saveTransaction');
+        const deleteTransaction = document.getElementById('deleteTransaction');
+        const editTransactionType = document.getElementById('editTransactionType');
+        const editTransactionAmount = document.getElementById('editTransactionAmount');
+        const editTransactionCategory = document.getElementById('editTransactionCategory');
+        const editTransactionDate = document.getElementById('editTransactionDate');
+        const editTransactionNote = document.getElementById('editTransactionNote');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const timeNavButton = document.getElementById('timeNavButton');
+        const resetTransactions = document.getElementById('resetTransactions');
+        const resetConfirmModal = document.getElementById('resetConfirmModal');
+        const closeResetModal = document.getElementById('closeResetModal');
+        const cancelReset = document.getElementById('cancelReset');
+        const confirmReset = document.getElementById('confirmReset');
+
+        // Initialize
+        function init() {
+            updateSummary();
+            renderTransactionList();
+            setDefaultDate();
+        }
+
+        // Set default date to today
+        function setDefaultDate() {
+            const today = new Date().toISOString().split('T')[0];
+            transactionDate.value = today;
+        }
+
+        // Update summary
+        function updateSummary() {
+            let income = 0;
+            let expense = 0;
+            let savings = 0;
+
+            transactions.forEach(t => {
+                if (t.type === 'income') income += t.amount;
+                else if (t.type === 'expense') expense += t.amount;
+                else if (t.type === 'savings') savings += t.amount;
+            });
+
+            totalIncome.textContent = `${income.toLocaleString()} VND`;
+            totalExpense.textContent = `${expense.toLocaleString()} VND`;
+            balance.textContent = `${(income - expense + savings).toLocaleString()} VND`;
+        }
+
+        // Render transaction list
+        function renderTransactionList() {
+            transactionList.innerHTML = '';
+            transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            transactions.forEach((t, index) => {
+                const transactionElement = document.createElement('div');
+                transactionElement.className = 'transaction-item p-3 rounded-lg flex justify-between items-center';
+                transactionElement.classList.add(t.type === 'income' ? 'bg-green-100 dark:bg-green-900' : t.type === 'expense' ? 'bg-red-100 dark:bg-red-900' : 'bg-blue-100 dark:bg-blue-900');
+
+                const categoryText = {
+                    salary: 'Lương',
+                    food: 'Ăn Uống',
+                    transport: 'Di Chuyển',
+                    entertainment: 'Giải Trí',
+                    bills: 'Hóa Đơn',
+                    savings: 'Tiết Kiệm',
+                    other: 'Khác'
+                };
+
+                transactionElement.innerHTML = `
+                    <div>
+                        <div class="flex items-center">
+                            <i class="fas ${t.type === 'income' ? 'fa-arrow-up' : t.type === 'expense' ? 'fa-arrow-down' : 'fa-piggy-bank'} mr-2"></i>
+                            <span class="font-medium">${t.type === 'income' ? 'Thu Nhập' : t.type === 'expense' ? 'Chi Tiêu' : 'Tiết Kiệm'}</span>
+                        </div>
+                        <div class="text-sm mt-1">
+                            ${t.amount.toLocaleString()} VND - ${categoryText[t.category] || t.category}
+                        </div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">${new Date(t.date).toLocaleDateString('vi-VN')}</div>
+                        ${t.note ? `<div class="text-sm mt-1">${t.note.substring(0, 30)}${t.note.length > 30 ? '...' : ''}</div>` : ''}
+                    </div>
+                    <button class="edit-transaction-btn p-1 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                `;
+
+                transactionElement.querySelector('.edit-transaction-btn').addEventListener('click', () => openEditModal(index));
+                transactionList.appendChild(transactionElement);
+            });
+        }
+
+        // Open reset confirmation modal
+        function openResetConfirmModal() {
+            resetConfirmModal.classList.remove('hidden');
+        }
+
+        // Close reset confirmation modal
+        function closeResetConfirmModal() {
+            resetConfirmModal.classList.add('hidden');
+        }
+
+        // Reset all transactions
+        function resetAllTransactions() {
+            transactions = [];
+            localStorage.setItem('financeManagerTransactions', JSON.stringify(transactions));
+            updateSummary();
+            renderTransactionList();
+            closeResetConfirmModal();
+        }
+
+        // Open edit modal
+        function openEditModal(index) {
+            editingTransactionIndex = index;
+            const t = transactions[index];
+
+            editTransactionType.value = t.type;
+            editTransactionAmount.value = t.amount;
+            editTransactionCategory.value = t.category;
+            editTransactionDate.value = t.date;
+            editTransactionNote.value = t.note || '';
+
+            transactionModal.classList.remove('hidden');
+        }
+
+        // Save transaction
+        function saveTransactionData() {
+            const amount = parseFloat(editTransactionAmount.value);
+            if (!amount || !editTransactionDate.value) return;
+
+            const transaction = {
+                type: editTransactionType.value,
+                amount: amount,
+                category: editTransactionCategory.value,
+                date: editTransactionDate.value,
+                note: editTransactionNote.value.trim(),
+                createdAt: new Date().toISOString()
+            };
+
+            if (editingTransactionIndex !== null) {
+                transactions[editingTransactionIndex] = transaction;
+            } else {
+                transactions.push(transaction);
+            }
+
+            localStorage.setItem('financeManagerTransactions', JSON.stringify(transactions));
+            updateSummary();
+            renderTransactionList();
+            transactionModal.classList.add('hidden');
+            editingTransactionIndex = null;
+        }
+
+        // Delete transaction
+        function deleteTransactionData() {
+            if (editingTransactionIndex === null) return;
+
+            transactions.splice(editingTransactionIndex, 1);
+            localStorage.setItem('financeManagerTransactions', JSON.stringify(transactions));
+            updateSummary();
+            renderTransactionList();
+            transactionModal.classList.add('hidden');
+            editingTransactionIndex = null;
+        }
+
+        // Add new transaction
+        function addNewTransaction() {
+            const amount = parseFloat(transactionAmount.value);
+            if (!amount || !transactionDate.value) return;
+
+            const transaction = {
+                type: transactionType.value,
+                amount: amount,
+                category: transactionCategory.value,
+                date: transactionDate.value,
+                note: transactionNote.value.trim(),
+                createdAt: new Date().toISOString()
+            };
+
+            transactions.push(transaction);
+            localStorage.setItem('financeManagerTransactions', JSON.stringify(transactions));
+            updateSummary();
+            renderTransactionList();
+
+            // Reset form
+            transactionAmount.value = '';
+            transactionNote.value = '';
+            setDefaultDate();
+        }
+
+        // Event Listeners
+        addTransaction.addEventListener('click', addNewTransaction);
+        saveTransaction.addEventListener('click', saveTransactionData);
+        deleteTransaction.addEventListener('click', deleteTransactionData);
+        closeTransactionModal.addEventListener('click', () => {
+            transactionModal.classList.add('hidden');
+            editingTransactionIndex = null;
+        });
+
+        transactionModal.addEventListener('click', (e) => {
+            if (e.target === transactionModal) {
+                transactionModal.classList.add('hidden');
+                editingTransactionIndex = null;
+            }
+        });
+
+        darkModeToggle.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('darkMode', document.documentElement.classList.contains('dark'));
+        });
+
+        timeNavButton.addEventListener('click', () => {
+            window.location.href = 'index.html';
+        });
+
+        resetTransactions.addEventListener('click', openResetConfirmModal);
+        closeResetModal.addEventListener('click', closeResetConfirmModal);
+        cancelReset.addEventListener('click', closeResetConfirmModal);
+        confirmReset.addEventListener('click', resetAllTransactions);
+
+        resetConfirmModal.addEventListener('click', (e) => {
+            if (e.target === resetConfirmModal) {
+                closeResetConfirmModal();
+            }
+        });
+
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark');
+        }
+
+        // Initialize
+        init();
+    </script>
+</body>
+</html>

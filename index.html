@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NMD TimeManagement</title>
+    <link rel="icon" type="image/png" href="img/logo2.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            100: '#1a1a1a',
+                            200: '#2d2d2d',
+                            300: '#3d3d3d',
+                            400: '#4d4d4d',
+                        },
+                        priority: {
+                            low: '#4ade80',
+                            medium: '#fbbf24',
+                            high: '#f87171',
+                            urgent: '#ef4444'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .calendar-day {
+            transition: all 0.2s ease;
+        }
+        .calendar-day:hover {
+            transform: scale(1.03);
+        }
+        .note-modal {
+            transition: all 0.3s ease;
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        .dark .calendar-day {
+            border-color: #4d4d4d;
+        }
+        .dark .calendar-day:hover {
+            background-color: #3d3d3d;
+        }
+        .priority-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
+        }
+        .category-tag {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-right: 4px;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .note-item {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .note-item:hover {
+            transform: translateX(2px);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-dark-100 text-gray-800 dark:text-gray-200 min-h-screen transition-colors duration-300">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Tiêu đề -->
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
+                <i class="fas fa-clock mr-2"></i> NMD TimeManagement
+            </h1>
+            <div class="flex items-center space-x-4">
+                <button id="financeNavButton" class="px-4 py-2 bg-green-500 dark:bg-green-600 text-white rounded-lg hover:bg-green-600 dark:hover:bg-green-500 transition-colors">
+                    <i class="fas fa-wallet mr-2"></i> Quản Lý Tài Chính
+                </button>
+                <button id="darkModeToggle" class="p-2 rounded-full bg-gray-200 dark:bg-dark-300 hover:bg-gray-300 dark:hover:bg-dark-400 transition-colors">
+                    <i class="fas fa-moon dark:hidden"></i>
+                    <i class="fas fa-sun hidden dark:block"></i>
+                </button>
+                <div class="relative">
+                    <button id="monthDropdown" class="px-4 py-2 bg-indigo-600 dark:bg-indigo-700 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors">
+                        <span id="currentMonthYear">Tháng Sáu 2023</span>
+                        <i class="fas fa-chevron-down ml-2"></i>
+                    </button>
+                    <div id="monthDropdownMenu" class="hidden absolute z-10 mt-2 w-48 bg-white dark:bg-dark-200 rounded-md shadow-lg py-1">
+                        <!-- Các tháng sẽ được thêm bởi JS -->
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Điều hướng lịch -->
+        <div class="flex justify-between items-center mb-6">
+            <button id="prevMonth" class="p-2 rounded-full bg-gray-200 dark:bg-dark-300 hover:bg-gray-300 dark:hover:bg-dark-400 transition-colors">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="text-xl font-semibold" id="monthYearDisplay">Tháng Sáu 2023</div>
+            <button id="nextMonth" class="p-2 rounded-full bg-gray-200 dark:bg-dark-300 hover:bg-gray-300 dark:hover:bg-dark-400 transition-colors">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+
+        <!-- Lưới ngày trong tuần -->
+        <div class="grid grid-cols-7 gap-2 mb-6">
+            <div class="text-center font-semibold py-2">CN</div>
+            <div class="text-center font-semibold py-2">T2</div>
+            <div class="text-center font-semibold py-2">T3</div>
+            <div class="text-center font-semibold py-2">T4</div>
+            <div class="text-center font-semibold py-2">T5</div>
+            <div class="text-center font-semibold py-2">T6</div>
+            <div class="text-center font-semibold py-2">T7</div>
+        </div>
+
+        <!-- Lưới lịch -->
+        <div id="calendarGrid" class="grid grid-cols-7 gap-2">
+            <!-- Các ngày sẽ được thêm bởi JS -->
+        </div>
+
+        <!-- Modal ghi chú -->
+        <div id="noteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="note-modal bg-white dark:bg-dark-200 rounded-lg p-6 w-full max-w-md fade-in">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold" id="noteModalDate">15 Tháng Sáu, 2023</h3>
+                    <button id="closeNoteModal" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1">Loại Ghi Chú</label>
+                    <select id="noteType" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300">
+                        <option value="event">Sự Kiện</option>
+                        <option value="task">Nhiệm Vụ</option>
+                        <option value="study">Học Tập</option>
+                        <option value="reminder">Nhắc Nhở</option>
+                        <option value="personal">Cá Nhân</option>
+                    </select>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1">Mức Độ Ưu Tiên</label>
+                    <div class="flex space-x-2">
+                        <label class="flex items-center">
+                            <input type="radio" name="priority" value="low" class="mr-1">
+                            <span class="priority-dot bg-priority-low"></span> Thấp
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="priority" value="medium" class="mr-1" checked>
+                            <span class="priority-dot bg-priority-medium"></span> Trung Bình
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="priority" value="high" class="mr-1">
+                            <span class="priority-dot bg-priority-high"></span> Cao
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="priority" value="urgent" class="mr-1">
+                            <span class="priority-dot bg-priority-urgent"></span> Khẩn Cấp
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1">Thời Gian (tùy chọn)</label>
+                    <input type="time" id="noteTime" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300">
+                </div>
+                
+                <textarea id="noteText" class="w-full h-32 p-3 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300 mb-4" placeholder="Thêm ghi chú chi tiết tại đây..."></textarea>
+                
+                <div class="flex justify-end space-x-3">
+                    <button id="deleteNote" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+                        Xóa
+                    </button>
+                    <button id="saveNote" class="px-4 py-2 bg-indigo-600 dark:bg-indigo-700 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors">
+                        Lưu
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal danh sách ghi chú -->
+        <div id="notesListModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="note-modal bg-white dark:bg-dark-200 rounded-lg p-6 w-full max-w-md fade-in max-h-96 overflow-y-auto">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold" id="notesListModalDate">15 Tháng Sáu, 2023</h3>
+                    <button id="closeNotesListModal" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div id="notesListContainer" class="mb-4">
+                    <!-- Các ghi chú sẽ được thêm tại đây -->
+                </div>
+                
+                <div class="flex justify-between">
+                    <button id="addNewNote" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+                        <i class="fas fa-plus mr-1"></i> Thêm Mới
+                    </button>
+                    <button id="closeNotesList" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors">
+                        Đóng
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Ngày hiện tại
+        let currentDate = new Date();
+        let currentMonth = currentDate.getMonth();
+        let currentYear = currentDate.getFullYear();
+        let selectedDate = null;
+        let notes = JSON.parse(localStorage.getItem('advancedTimeManagerNotes')) || {};
+        let currentlyEditingNoteIndex = null;
+
+        // Các phần tử DOM
+        const calendarGrid = document.getElementById('calendarGrid');
+        const monthYearDisplay = document.getElementById('monthYearDisplay');
+        const currentMonthYear = document.getElementById('currentMonthYear');
+        const prevMonthBtn = document.getElementById('prevMonth');
+        const nextMonthBtn = document.getElementById('nextMonth');
+        const monthDropdown = document.getElementById('monthDropdown');
+        const monthDropdownMenu = document.getElementById('monthDropdownMenu');
+        const noteModal = document.getElementById('noteModal');
+        const noteModalDate = document.getElementById('noteModalDate');
+        const noteText = document.getElementById('noteText');
+        const noteType = document.getElementById('noteType');
+        const noteTime = document.getElementById('noteTime');
+        const saveNoteBtn = document.getElementById('saveNote');
+        const deleteNoteBtn = document.getElementById('deleteNote');
+        const closeNoteModal = document.getElementById('closeNoteModal');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const notesListModal = document.getElementById('notesListModal');
+        const notesListModalDate = document.getElementById('notesListModalDate');
+        const notesListContainer = document.getElementById('notesListContainer');
+        const closeNotesListModal = document.getElementById('closeNotesListModal');
+        const closeNotesList = document.getElementById('closeNotesList');
+        const addNewNote = document.getElementById('addNewNote');
+        const financeNavButton = document.getElementById('financeNavButton');
+
+        // Khởi tạo lịch
+        function initCalendar() {
+            updateMonthYearDisplay();
+            renderCalendar();
+            populateMonthDropdown();
+        }
+
+        // Cập nhật hiển thị tháng/năm
+        function updateMonthYearDisplay() {
+            const monthNames = ["Tháng Một", "Tháng Hai", "Tháng Ba", "Tháng Tư", "Tháng Năm", "Tháng Sáu", "Tháng Bảy", "Tháng Tám", "Tháng Chín", "Tháng Mười", "Tháng Mười Một", "Tháng Mười Hai"];
+            monthYearDisplay.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+            currentMonthYear.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+        }
+
+        // Vẽ lịch
+        function renderCalendar() {
+            calendarGrid.innerHTML = '';
+            
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            const lastDay = new Date(currentYear, currentMonth + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startingDay = firstDay.getDay();
+            
+            // Các ngày của tháng trước
+            const prevMonthLastDay = new Date(currentYear, currentMonth, 0).getDate();
+            for (let i = 0; i < startingDay; i++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day p-2 h-28 border rounded-lg bg-gray-50 dark:bg-dark-300 text-gray-400 dark:text-gray-500';
+                dayElement.textContent = prevMonthLastDay - startingDay + i + 1;
+                calendarGrid.appendChild(dayElement);
+            }
+            
+            // Các ngày của tháng hiện tại
+            const today = new Date();
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day p-2 h-28 border rounded-lg bg-white dark:bg-dark-200 cursor-pointer overflow-y-auto';
+                dayElement.textContent = i;
+                
+                // Đánh dấu ngày hiện tại
+                if (i === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear()) {
+                    dayElement.classList.add('border-2', 'border-indigo-500');
+                }
+                
+                // Kiểm tra ghi chú
+                const dateKey = `${currentYear}-${currentMonth + 1}-${i}`;
+                if (notes[dateKey]) {
+                    const noteContainer = document.createElement('div');
+                    noteContainer.className = 'mt-1 space-y-1';
+                    
+                    notes[dateKey].forEach(note => {
+                        const noteElement = document.createElement('div');
+                        noteElement.className = 'text-xs p-1 rounded truncate';
+                        
+                        // Đặt màu nền dựa trên mức độ ưu tiên
+                        if (note.priority === 'low') noteElement.classList.add('bg-green-100', 'dark:bg-green-900');
+                        else if (note.priority === 'medium') noteElement.classList.add('bg-yellow-100', 'dark:bg-yellow-900');
+                        else if (note.priority === 'high') noteElement.classList.add('bg-red-100', 'dark:bg-red-900');
+                        else if (note.priority === 'urgent') noteElement.classList.add('bg-red-200', 'dark:bg-red-800');
+                        
+                        // Thêm biểu tượng dựa trên loại ghi chú
+                        let iconClass = 'fas fa-calendar';
+                        if (note.type === 'task') iconClass = 'fas fa-check-circle';
+                        else if (note.type === 'study') iconClass = 'fas fa-book';
+                        else if (note.type === 'reminder') iconClass = 'fas fa-bell';
+                        else if (note.type === 'personal') iconClass = 'fas fa-user';
+                        
+                        noteElement.innerHTML = `
+                            <i class="${iconClass} mr-1"></i>
+                            ${note.time ? `<span class="font-semibold">${note.time}</span> ` : ''}
+                            ${note.text.substring(0, 15)}${note.text.length > 15 ? '...' : ''}
+                        `;
+                        
+                        noteContainer.appendChild(noteElement);
+                    });
+                    
+                    dayElement.appendChild(noteContainer);
+                }
+                
+                dayElement.addEventListener('click', () => openNotesListModal(i));
+                calendarGrid.appendChild(dayElement);
+            }
+            
+            // Các ngày của tháng sau
+            const totalCells = startingDay + daysInMonth;
+            const remainingCells = totalCells > 35 ? 42 - totalCells : 35 - totalCells;
+            for (let i = 1; i <= remainingCells; i++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day p-2 h-28 border rounded-lg bg-gray-50 dark:bg-dark-300 text-gray-400 dark:text-gray-500';
+                dayElement.textContent = i;
+                calendarGrid.appendChild(dayElement);
+            }
+        }
+
+        // Điền danh sách tháng vào menu thả xuống
+        function populateMonthDropdown() {
+            monthDropdownMenu.innerHTML = '';
+            const monthNames = ["Tháng Một", "Tháng Hai", "Tháng Ba", "Tháng Tư", "Tháng Năm", "Tháng Sáu", "Tháng Bảy", "Tháng Tám", "Tháng Chín", "Tháng Mười", "Tháng Mười Một", "Tháng Mười Hai"];
+            
+            for (let i = 0; i < 12; i++) {
+                const monthItem = document.createElement('a');
+                monthItem.href = '#';
+                monthItem.className = 'block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-300';
+                monthItem.textContent = monthNames[i];
+                
+                monthItem.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    currentMonth = i;
+                    updateMonthYearDisplay();
+                    renderCalendar();
+                    monthDropdownMenu.classList.add('hidden');
+                });
+                
+                monthDropdownMenu.appendChild(monthItem);
+            }
+            
+            // Thêm chọn năm
+            const yearItem = document.createElement('div');
+            yearItem.className = 'px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 border-t border-gray-200 dark:border-dark-300';
+            
+            const yearSelect = document.createElement('select');
+            yearSelect.className = 'w-full bg-transparent border-none focus:ring-0';
+            
+            for (let year = currentYear - 10; year <= currentYear + 10; year++) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                if (year === currentYear) {
+                    option.selected = true;
+                }
+                yearSelect.appendChild(option);
+            }
+            
+            yearSelect.addEventListener('change', () => {
+                currentYear = parseInt(yearSelect.value);
+                updateMonthYearDisplay();
+                renderCalendar();
+            });
+            
+            yearItem.appendChild(yearSelect);
+            monthDropdownMenu.appendChild(yearItem);
+        }
+
+        // Mở modal danh sách ghi chú
+        function openNotesListModal(day) {
+            selectedDate = new Date(currentYear, currentMonth, day);
+            const dateKey = `${currentYear}-${currentMonth + 1}-${day}`;
+            
+            const monthNames = ["Tháng Một", "Tháng Hai", "Tháng Ba", "Tháng Tư", "Tháng Năm", "Tháng Sáu", "Tháng Bảy", "Tháng Tám", "Tháng Chín", "Tháng Mười", "Tháng Mười Một", "Tháng Mười Hai"];
+            notesListModalDate.textContent = `${day} ${monthNames[currentMonth]}, ${currentYear}`;
+            
+            // Xóa các ghi chú cũ
+            notesListContainer.innerHTML = '';
+            
+            // Nếu không có ghi chú cho ngày này, hiển thị thông báo
+            if (!notes[dateKey] || notes[dateKey].length === 0) {
+                notesListContainer.innerHTML = '<p class="text-center text-gray-500 py-4">Không có ghi chú cho ngày này</p>';
+            } else {
+                // Thêm từng ghi chú vào danh sách
+                notes[dateKey].forEach((note, index) => {
+                    const noteElement = document.createElement('div');
+                    noteElement.className = 'note-item p-3 mb-2 rounded-lg flex justify-between items-center';
+                    
+                    // Đặt màu nền dựa trên mức độ ưu tiên
+                    if (note.priority === 'low') noteElement.classList.add('bg-green-100', 'dark:bg-green-900');
+                    else if (note.priority === 'medium') noteElement.classList.add('bg-yellow-100', 'dark:bg-yellow-900');
+                    else if (note.priority === 'high') noteElement.classList.add('bg-red-100', 'dark:bg-red-900');
+                    else if (note.priority === 'urgent') noteElement.classList.add('bg-red-200', 'dark:bg-red-800');
+                    
+                    // Thêm biểu tượng dựa trên loại ghi chú
+                    let iconClass = 'fas fa-calendar';
+                    if (note.type === 'task') iconClass = 'fas fa-check-circle';
+                    else if (note.type === 'study') iconClass = 'fas fa-book';
+                    else if (note.type === 'reminder') iconClass = 'fas fa-bell';
+                    else if (note.type === 'personal') iconClass = 'fas fa-user';
+                    
+                    noteElement.innerHTML = `
+                        <div>
+                            <div class="flex items-center">
+                                <i class="${iconClass} mr-2"></i>
+                                <span class="font-medium">${note.type === 'event' ? 'Sự Kiện' : note.type === 'task' ? 'Nhiệm Vụ' : note.type === 'study' ? 'Học Tập' : note.type === 'reminder' ? 'Nhắc Nhở' : 'Cá Nhân'}</span>
+                            </div>
+                            <div class="text-sm mt-1">
+                                ${note.time ? `<span class="font-semibold">${note.time}</span> - ` : ''}
+                                ${note.text.substring(0, 30)}${note.text.length > 30 ? '...' : ''}
+                            </div>
+                            <div class="flex flex-wrap mt-1">
+                                ${note.categories ? note.categories.map(cat => 
+                                    `<span class="category-tag ${getCategoryColorClass(cat)} mr-1 mb-1">${cat === 'work' ? 'Công Việc' : cat === 'study' ? 'Học Tập' : cat === 'personal' ? 'Cá Nhân' : 'Sức Khỏe'}</span>`
+                                ).join('') : ''}
+                            </div>
+                        </div>
+                        <button class="edit-note-btn p-1 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    `;
+                    
+                    // Thêm chức năng chỉnh sửa
+                    const editBtn = noteElement.querySelector('.edit-note-btn');
+                    editBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        openNoteModalForEdit(day, index);
+                    });
+                    
+                    notesListContainer.appendChild(noteElement);
+                });
+            }
+            
+            notesListModal.classList.remove('hidden');
+        }
+
+        // Lấy lớp màu cho danh mục
+        function getCategoryColorClass(category) {
+            switch(category) {
+                case 'work': return 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200';
+                case 'study': return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200';
+                case 'personal': return 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200';
+                case 'health': return 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200';
+                default: return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
+            }
+        }
+
+        // Mở modal ghi chú để chỉnh sửa
+        function openNoteModalForEdit(day, noteIndex) {
+            currentlyEditingNoteIndex = noteIndex;
+            const dateKey = `${currentYear}-${currentMonth + 1}-${day}`;
+            const note = notes[dateKey][noteIndex];
+            
+            const monthNames = ["Tháng Một", "Tháng Hai", "Tháng Ba", "Tháng Tư", "Tháng Năm", "Tháng Sáu", "Tháng Bảy", "Tháng Tám", "Tháng Chín", "Tháng Mười", "Tháng Mười Một", "Tháng Mười Hai"];
+            noteModalDate.textContent = `${day} ${monthNames[currentMonth]}, ${currentYear}`;
+            
+            // Điền dữ liệu ghi chú vào biểu mẫu
+            noteType.value = note.type || 'event';
+            document.querySelector(`input[name="priority"][value="${note.priority || 'medium'}"]`).checked = true;
+            
+            // Xóa tất cả checkbox danh mục trước
+            document.querySelectorAll('input[name="category"]').forEach(cb => cb.checked = false);
+            
+            // Đánh dấu các danh mục có trong ghi chú
+            if (note.categories) {
+                note.categories.forEach(cat => {
+                    const checkbox = document.querySelector(`input[name="category"][value="${cat}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+            
+            noteTime.value = note.time || '';
+            noteText.value = note.text || '';
+            
+            // Hiển thị modal ghi chú và ẩn modal danh sách ghi chú
+            notesListModal.classList.add('hidden');
+            noteModal.classList.remove('hidden');
+        }
+
+        // Mở modal ghi chú để tạo mới
+        function openNoteModalForNew(day) {
+            currentlyEditingNoteIndex = null;
+            selectedDate = new Date(currentYear, currentMonth, day);
+            
+            const monthNames = ["Tháng Một", "Tháng Hai", "Tháng Ba", "Tháng Tư", "Tháng Năm", "Tháng Sáu", "Tháng Bảy", "Tháng Tám", "Tháng Chín", "Tháng Mười", "Tháng Mười Một", "Tháng Mười Hai"];
+            noteModalDate.textContent = `${day} ${monthNames[currentMonth]}, ${currentYear}`;
+            
+            // Đặt lại biểu mẫu
+            noteType.value = 'event';
+            document.querySelector('input[name="priority"][value="medium"]').checked = true;
+            document.querySelectorAll('input[name="category"]').forEach(cb => cb.checked = false);
+            noteTime.value = '';
+            noteText.value = '';
+            
+            // Hiển thị modal ghi chú và ẩn modal danh sách ghi chú
+            notesListModal.classList.add('hidden');
+            noteModal.classList.remove('hidden');
+        }
+
+        // Lưu ghi chú
+        function saveNote() {
+            if (!selectedDate) return;
+            
+            const dateKey = `${selectedDate.getFullYear()}-${selectedDate.getMonth() + 1}-${selectedDate.getDate()}`;
+            const noteContent = noteText.value.trim();
+            
+            if (noteContent) {
+                // Lấy mức độ ưu tiên đã chọn
+                const priority = document.querySelector('input[name="priority"]:checked').value;
+                
+                // Lấy các danh mục đã chọn
+                const categories = [];
+                document.querySelectorAll('input[name="category"]:checked').forEach(cb => {
+                    categories.push(cb.value);
+                });
+                
+                const newNote = {
+                    type: noteType.value,
+                    priority: priority,
+                    categories: categories,
+                    time: noteTime.value,
+                    text: noteContent,
+                    createdAt: new Date().toISOString()
+                };
+                
+                // Khởi tạo mảng ghi chú cho ngày này nếu chưa có
+                if (!notes[dateKey]) {
+                    notes[dateKey] = [];
+                }
+                
+                if (currentlyEditingNoteIndex !== null) {
+                    // Cập nhật ghi chú hiện có
+                    notes[dateKey][currentlyEditingNoteIndex] = newNote;
+                } else {
+                    // Thêm ghi chú mới
+                    notes[dateKey].push(newNote);
+                }
+                
+                // Sắp xếp ghi chú theo thời gian nếu có
+                notes[dateKey].sort((a, b) => {
+                    if (a.time && b.time) return a.time.localeCompare(b.time);
+                    return 0;
+                });
+                
+                localStorage.setItem('advancedTimeManagerNotes', JSON.stringify(notes));
+            }
+            
+            renderCalendar();
+            noteModal.classList.add('hidden');
+            currentlyEditingNoteIndex = null;
+        }
+
+        // Xóa ghi chú
+        function deleteNote() {
+            if (!selectedDate || currentlyEditingNoteIndex === null) return;
+            
+            const dateKey = `${selectedDate.getFullYear()}-${selectedDate.getMonth() + 1}-${selectedDate.getDate()}`;
+            
+            // Xóa ghi chú tại chỉ số hiện tại
+            notes[dateKey].splice(currentlyEditingNoteIndex, 1);
+            
+            // Nếu không còn ghi chú cho ngày này, xóa khóa ngày
+            if (notes[dateKey].length === 0) {
+                delete notes[dateKey];
+            }
+            
+            localStorage.setItem('advancedTimeManagerNotes', JSON.stringify(notes));
+            renderCalendar();
+            noteModal.classList.add('hidden');
+            currentlyEditingNoteIndex = null;
+        }
+
+        // Các sự kiện lắng nghe
+        prevMonthBtn.addEventListener('click', () => {
+            if (currentMonth === 0) {
+                currentMonth = 11;
+                currentYear--;
+            } else {
+                currentMonth--;
+            }
+            updateMonthYearDisplay();
+            renderCalendar();
+        });
+
+        nextMonthBtn.addEventListener('click', () => {
+            if (currentMonth === 11) {
+                currentMonth = 0;
+                currentYear++;
+            } else {
+                currentMonth++;
+            }
+            updateMonthYearDisplay();
+            renderCalendar();
+        });
+
+        monthDropdown.addEventListener('click', () => {
+            monthDropdownMenu.classList.toggle('hidden');
+        });
+
+        saveNoteBtn.addEventListener('click', saveNote);
+        deleteNoteBtn.addEventListener('click', deleteNote);
+        closeNoteModal.addEventListener('click', () => {
+            noteModal.classList.add('hidden');
+            currentlyEditingNoteIndex = null;
+        });
+
+        noteModal.addEventListener('click', (e) => {
+            if (e.target === noteModal) {
+                noteModal.classList.add('hidden');
+                currentlyEditingNoteIndex = null;
+            }
+        });
+
+        closeNotesListModal.addEventListener('click', () => {
+            notesListModal.classList.add('hidden');
+        });
+
+        closeNotesList.addEventListener('click', () => {
+            notesListModal.classList.add('hidden');
+        });
+
+        addNewNote.addEventListener('click', () => {
+            const day = selectedDate.getDate();
+            openNoteModalForNew(day);
+        });
+
+        notesListModal.addEventListener('click', (e) => {
+            if (e.target === notesListModal) {
+                notesListModal.classList.add('hidden');
+            }
+        });
+
+        darkModeToggle.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('darkMode', document.documentElement.classList.contains('dark'));
+        });
+
+        financeNavButton.addEventListener('click', () => {
+            window.location.href = 'finance.html';
+        });
+
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark');
+        }
+
+        // Khởi tạo
+        initCalendar();
+    </script>
+</body>
+</html>

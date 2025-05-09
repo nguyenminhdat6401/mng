@@ -1,0 +1,81 @@
+/* Custom Colors */
+:root {
+    --dark-100: #1a1a1a;
+    --dark-200: #2d2d2d;
+    --dark-300: #3d3d3d;
+    --dark-400: #4d4d4d;
+    --priority-low: #4ade80;
+    --priority-medium: #fbbf24;
+    --priority-high: #f87171;
+    --priority-urgent: #ef4444;
+}
+
+/* Dark Mode Colors */
+.dark {
+    --dark-100: #1a1a1a;
+    --dark-200: #2d2d2d;
+    --dark-300: #3d3d3d;
+    --dark-400: #4d4d4d;
+}
+
+/* Calendar Day Styles */
+.calendar-day {
+    transition: all 0.2s ease;
+}
+
+.calendar-day:hover {
+    transform: scale(1.03);
+}
+
+/* Note Modal Styles */
+.note-modal {
+    transition: all 0.3s ease;
+}
+
+/* Fade In Animation */
+.fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Dark Mode Calendar Day */
+.dark .calendar-day {
+    border-color: var(--dark-400);
+}
+
+.dark .calendar-day:hover {
+    background-color: var(--dark-300);
+}
+
+/* Priority Dot */
+.priority-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 4px;
+}
+
+/* Category Tag */
+.category-tag {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    margin-right: 4px;
+}
+
+/* Fade In Keyframes */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Note Item */
+.note-item {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.note-item:hover {
+    transform: translateX(2px);
+}
