@@ -157,9 +157,9 @@
                 <div class="mb-4">
                     <label class="block text-sm font-medium mb-1">Mức Độ Ưu Tiên</label>
                     <div class="flex space-x-2">
-                        <label class="flex items-center">
-                            <input type="radio" name="priority" value="low" class="mr-1">
-                            <span class="priority-dot bg-priority-low"></span> Thấp
+                        <label class=" Handelbars
+                        <input type="radio" name="priority" value="low" class="mr-1">
+                        <span class="priority-dot bg-priority-low"></span> Thấp
                         </label>
                         <label class="flex items-center">
                             <input type="radio" name="priority" value="medium" class="mr-1" checked>
@@ -179,6 +179,11 @@
                 <div class="mb-4">
                     <label class="block text-sm font-medium mb-1">Thời Gian (tùy chọn)</label>
                     <input type="time" id="noteTime" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1">Địa Điểm (tùy chọn)</label>
+                    <input type="text" id="noteLocation" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300" placeholder="Nhập địa điểm...">
                 </div>
                 
                 <textarea id="noteText" class="w-full h-32 p-3 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300 mb-4" placeholder="Thêm ghi chú chi tiết tại đây..."></textarea>
@@ -250,6 +255,7 @@
         const noteText = document.getElementById('noteText');
         const noteType = document.getElementById('noteType');
         const noteTime = document.getElementById('noteTime');
+        const noteLocation = document.getElementById('noteLocation');
         const saveNoteBtn = document.getElementById('saveNote');
         const deleteNoteBtn = document.getElementById('deleteNote');
         const closeNoteModal = document.getElementById('closeNoteModal');
@@ -290,7 +296,7 @@
             const prevMonthLastDay = new Date(currentYear, currentMonth, 0).getDate();
             for (let i = 0; i < startingDay; i++) {
                 const dayElement = document.createElement('div');
-                dayElement.className = 'calendar-day p-2 h-28 border rounded-lg bg-gray-50 dark:bg-dark-300 text-gray-400 dark:text-gray-500';
+                dayElement.className = 'calendar-day p-2 h-32 border rounded-lg bg-gray-50 dark:bg-dark-300 text-gray-400 dark:text-gray-500';
                 dayElement.textContent = prevMonthLastDay - startingDay + i + 1;
                 calendarGrid.appendChild(dayElement);
             }
@@ -299,7 +305,7 @@
             const today = new Date();
             for (let i = 1; i <= daysInMonth; i++) {
                 const dayElement = document.createElement('div');
-                dayElement.className = 'calendar-day p-2 h-28 border rounded-lg bg-white dark:bg-dark-200 cursor-pointer overflow-y-auto';
+                dayElement.className = 'calendar-day p-2 h-32 border rounded-lg bg-white dark:bg-dark-200 cursor-pointer overflow-y-auto';
                 dayElement.textContent = i;
                 
                 // Đánh dấu ngày hiện tại
@@ -334,6 +340,7 @@
                             <i class="${iconClass} mr-1"></i>
                             ${note.time ? `<span class="font-semibold">${note.time}</span> ` : ''}
                             ${note.text.substring(0, 15)}${note.text.length > 15 ? '...' : ''}
+                            ${note.location ? `<br><i class="fas fa-map-marker-alt mr-1"></i>${note.location.substring(0, 10)}${note.location.length > 10 ? '...' : ''}` : ''}
                         `;
                         
                         noteContainer.appendChild(noteElement);
@@ -351,7 +358,7 @@
             const remainingCells = totalCells > 35 ? 42 - totalCells : 35 - totalCells;
             for (let i = 1; i <= remainingCells; i++) {
                 const dayElement = document.createElement('div');
-                dayElement.className = 'calendar-day p-2 h-28 border rounded-lg bg-gray-50 dark:bg-dark-300 text-gray-400 dark:text-gray-500';
+                dayElement.className = 'calendar-day p-2 h-32 border rounded-lg bg-gray-50 dark:bg-dark-300 text-gray-400 dark:text-gray-500';
                 dayElement.textContent = i;
                 calendarGrid.appendChild(dayElement);
             }
@@ -449,11 +456,7 @@
                                 ${note.time ? `<span class="font-semibold">${note.time}</span> - ` : ''}
                                 ${note.text.substring(0, 30)}${note.text.length > 30 ? '...' : ''}
                             </div>
-                            <div class="flex flex-wrap mt-1">
-                                ${note.categories ? note.categories.map(cat => 
-                                    `<span class="category-tag ${getCategoryColorClass(cat)} mr-1 mb-1">${cat === 'work' ? 'Công Việc' : cat === 'study' ? 'Học Tập' : cat === 'personal' ? 'Cá Nhân' : 'Sức Khỏe'}</span>`
-                                ).join('') : ''}
-                            </div>
+                            ${note.location ? `<div class="text-sm mt-1"><i class="fas fa-map-marker-alt mr-1"></i>${note.location.substring(0, 20)}${note.location.length > 20 ? '...' : ''}</div>` : ''}
                         </div>
                         <button class="edit-note-btn p-1 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400">
                             <i class="fas fa-edit"></i>
@@ -474,17 +477,6 @@
             notesListModal.classList.remove('hidden');
         }
 
-        // Lấy lớp màu cho danh mục
-        function getCategoryColorClass(category) {
-            switch(category) {
-                case 'work': return 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200';
-                case 'study': return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200';
-                case 'personal': return 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200';
-                case 'health': return 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200';
-                default: return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
-            }
-        }
-
         // Mở modal ghi chú để chỉnh sửa
         function openNoteModalForEdit(day, noteIndex) {
             currentlyEditingNoteIndex = noteIndex;
@@ -497,19 +489,8 @@
             // Điền dữ liệu ghi chú vào biểu mẫu
             noteType.value = note.type || 'event';
             document.querySelector(`input[name="priority"][value="${note.priority || 'medium'}"]`).checked = true;
-            
-            // Xóa tất cả checkbox danh mục trước
-            document.querySelectorAll('input[name="category"]').forEach(cb => cb.checked = false);
-            
-            // Đánh dấu các danh mục có trong ghi chú
-            if (note.categories) {
-                note.categories.forEach(cat => {
-                    const checkbox = document.querySelector(`input[name="category"][value="${cat}"]`);
-                    if (checkbox) checkbox.checked = true;
-                });
-            }
-            
             noteTime.value = note.time || '';
+            noteLocation.value = note.location || '';
             noteText.value = note.text || '';
             
             // Hiển thị modal ghi chú và ẩn modal danh sách ghi chú
@@ -528,8 +509,8 @@
             // Đặt lại biểu mẫu
             noteType.value = 'event';
             document.querySelector('input[name="priority"][value="medium"]').checked = true;
-            document.querySelectorAll('input[name="category"]').forEach(cb => cb.checked = false);
             noteTime.value = '';
+            noteLocation.value = '';
             noteText.value = '';
             
             // Hiển thị modal ghi chú và ẩn modal danh sách ghi chú
@@ -548,17 +529,11 @@
                 // Lấy mức độ ưu tiên đã chọn
                 const priority = document.querySelector('input[name="priority"]:checked').value;
                 
-                // Lấy các danh mục đã chọn
-                const categories = [];
-                document.querySelectorAll('input[name="category"]:checked').forEach(cb => {
-                    categories.push(cb.value);
-                });
-                
                 const newNote = {
                     type: noteType.value,
                     priority: priority,
-                    categories: categories,
                     time: noteTime.value,
+                    location: noteLocation.value.trim(),
                     text: noteContent,
                     createdAt: new Date().toISOString()
                 };
