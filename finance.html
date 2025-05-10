@@ -115,8 +115,8 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium mb-1">Số Tiền</label>
-                    <input type="number" id="transactionAmount" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300" placeholder="Nhập số tiền">
+                    <label class="block text-sm font-medium mb-1">Số Tiền (nghìn VND)</label>
+                    <input type="number" id="transactionAmount" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300" placeholder="Nhập số tiền (nghìn VND)">
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-1">Danh Mục</label>
@@ -173,7 +173,7 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium mb-1">Số Tiền</label>
+                        <label class="block text-sm font-medium mb-1">Số Tiền (nghìn VND)</label>
                         <input type="number" id="editTransactionAmount" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300">
                     </div>
                     <div>
@@ -190,7 +190,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-1">Ngày</label>
-                        <input type="date" id="editTransactionDate" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300">
+                        <input type="date" id="editTransactionAmount" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300">
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-1">Ghi Chú</label>
@@ -288,9 +288,9 @@
                 else if (t.type === 'savings') savings += t.amount;
             });
 
-            totalIncome.textContent = `${income.toLocaleString()} VND`;
-            totalExpense.textContent = `${expense.toLocaleString()} VND`;
-            balance.textContent = `${(income - expense + savings).toLocaleString()} VND`;
+            totalIncome.textContent = `${(income/1000).toLocaleString()}.000 VND`;
+            totalExpense.textContent = `${(expense/1000).toLocaleString()}.000 VND`;
+            balance.textContent = `${((income - expense + savings)/1000).toLocaleString()}.000 VND`;
         }
 
         // Render transaction list
@@ -320,7 +320,7 @@
                             <span class="font-medium">${t.type === 'income' ? 'Thu Nhập' : t.type === 'expense' ? 'Chi Tiêu' : 'Tiết Kiệm'}</span>
                         </div>
                         <div class="text-sm mt-1">
-                            ${t.amount.toLocaleString()} VND - ${categoryText[t.category] || t.category}
+                            ${(t.amount/1000).toLocaleString()}.000 VND - ${categoryText[t.category] || t.category}
                         </div>
                         <div class="text-sm text-gray-500 dark:text-gray-400">${new Date(t.date).toLocaleDateString('vi-VN')}</div>
                         ${t.note ? `<div class="text-sm mt-1">${t.note.substring(0, 30)}${t.note.length > 30 ? '...' : ''}</div>` : ''}
@@ -360,7 +360,7 @@
             const t = transactions[index];
 
             editTransactionType.value = t.type;
-            editTransactionAmount.value = t.amount;
+            editTransactionAmount.value = t.amount / 1000; // Display in thousands
             editTransactionCategory.value = t.category;
             editTransactionDate.value = t.date;
             editTransactionNote.value = t.note || '';
@@ -370,7 +370,7 @@
 
         // Save transaction
         function saveTransactionData() {
-            const amount = parseFloat(editTransactionAmount.value);
+            const amount = parseFloat(editTransactionAmount.value) * 1000; // Convert to actual amount
             if (!amount || !editTransactionDate.value) return;
 
             const transaction = {
@@ -409,7 +409,7 @@
 
         // Add new transaction
         function addNewTransaction() {
-            const amount = parseFloat(transactionAmount.value);
+            const amount = parseFloat(transactionAmount.value) * 1000; // Convert to actual amount
             if (!amount || !transactionDate.value) return;
 
             const transaction = {
