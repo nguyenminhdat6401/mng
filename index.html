@@ -49,6 +49,9 @@
         .dark .calendar-day:hover {
             background-color: #3d3d3d;
         }
+        .dark .border-indigo-500 {
+            border-color: #ffffff !important;
+        }
         .priority-dot {
             width: 10px;
             height: 10px;
@@ -394,7 +397,7 @@
                 monthItem.textContent = monthNames[i];
                 
                 monthItem.addEventListener('click', (e) => {
-                    epreventDefault();
+                    e.preventDefault();
                     currentMonth = i;
                     updateMonthYearDisplay();
                     renderCalendar();
