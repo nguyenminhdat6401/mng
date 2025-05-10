@@ -74,6 +74,9 @@
         .note-item:hover {
             transform: translateX(2px);
         }
+        .note-text {
+            word-break: break-word;
+        }
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-dark-100 text-gray-800 dark:text-gray-200 min-h-screen transition-colors duration-300">
@@ -157,9 +160,9 @@
                 <div class="mb-4">
                     <label class="block text-sm font-medium mb-1">Mức Độ Ưu Tiên</label>
                     <div class="flex space-x-2">
-                        <label class=" Handelbars
-                        <input type="radio" name="priority" value="low" class="mr-1">
-                        <span class="priority-dot bg-priority-low"></span> Thấp
+                        <label class="flex items-center">
+                            <input type="radio" name="priority" value="low" class="mr-1">
+                            <span class="priority-dot bg-priority-low"></span> Thấp
                         </label>
                         <label class="flex items-center">
                             <input type="radio" name="priority" value="medium" class="mr-1" checked>
@@ -201,7 +204,7 @@
 
         <!-- Modal danh sách ghi chú -->
         <div id="notesListModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="note-modal bg-white dark:bg-dark-200 rounded-lg p-6 w-full max-w-md fade-in max-h-96 overflow-y-auto">
+            <div class="note-modal bg-white dark:bg-dark-200 rounded-lg p-6 w-full max-w-md fade-in max-h-[80vh] overflow-y-auto">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-xl font-semibold" id="notesListModalDate">15 Tháng Sáu, 2023</h3>
                     <button id="closeNotesListModal" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
@@ -231,6 +234,7 @@
         const savedToken = localStorage.getItem('nmd_remember_token');
         const users = JSON.parse(localStorage.getItem('nmd_users')) || {};
         if (!currentUser || (savedToken && !users[currentUser]) || (savedToken && users[currentUser].token !== savedToken)) {
+            console.log('Authentication failed, redirecting to login');
             window.location.href = 'login.html';
         }
 
@@ -239,7 +243,13 @@
         let currentMonth = currentDate.getMonth();
         let currentYear = currentDate.getFullYear();
         let selectedDate = null;
-        let notes = JSON.parse(localStorage.getItem(`advancedTimeManagerNotes_${currentUser}`)) || {};
+        let notes = {};
+        try {
+            notes = JSON.parse(localStorage.getItem(`advancedTimeManagerNotes_${currentUser}`)) || {};
+        } catch (e) {
+            console.error('Error parsing notes from localStorage:', e);
+            notes = {};
+        }
         let currentlyEditingNoteIndex = null;
 
         // Các phần tử DOM
@@ -269,8 +279,14 @@
         const financeNavButton = document.getElementById('financeNavButton');
         const logoutButton = document.getElementById('logoutButton');
 
+        // Kiểm tra DOM elements
+        if (!calendarGrid || !saveNoteBtn || !deleteNoteBtn || !darkModeToggle) {
+            console.error('One or more DOM elements not found');
+        }
+
         // Khởi tạo lịch
         function initCalendar() {
+            console.log('Initializing calendar');
             updateMonthYearDisplay();
             renderCalendar();
             populateMonthDropdown();
@@ -285,6 +301,7 @@
 
         // Vẽ lịch
         function renderCalendar() {
+            console.log('Rendering calendar for', currentYear, currentMonth);
             calendarGrid.innerHTML = '';
             
             const firstDay = new Date(currentYear, currentMonth, 1);
@@ -317,11 +334,11 @@
                 const dateKey = `${currentYear}-${currentMonth + 1}-${i}`;
                 if (notes[dateKey]) {
                     const noteContainer = document.createElement('div');
-                    noteContainer.className = 'mt-1 space-y-1';
+                    noteContainer.className = 'mt-1 space-y-1 note-text';
                     
                     notes[dateKey].forEach(note => {
                         const noteElement = document.createElement('div');
-                        noteElement.className = 'text-xs p-1 rounded truncate';
+                        noteElement.className = 'text-xs p-1 rounded note-text';
                         
                         // Đặt màu nền dựa trên mức độ ưu tiên
                         if (note.priority === 'low') noteElement.classList.add('bg-green-100', 'dark:bg-green-900');
@@ -339,8 +356,8 @@
                         noteElement.innerHTML = `
                             <i class="${iconClass} mr-1"></i>
                             ${note.time ? `<span class="font-semibold">${note.time}</span> ` : ''}
-                            ${note.text.substring(0, 15)}${note.text.length > 15 ? '...' : ''}
-                            ${note.location ? `<br><i class="fas fa-map-marker-alt mr-1"></i>${note.location.substring(0, 10)}${note.location.length > 10 ? '...' : ''}` : ''}
+                            ${note.text}
+                            ${note.location ? `<br><i class="fas fa-map-marker-alt mr-1"></i>${note.location}` : ''}
                         `;
                         
                         noteContainer.appendChild(noteElement);
@@ -366,6 +383,7 @@
 
         // Điền danh sách tháng vào menu thả xuống
         function populateMonthDropdown() {
+            console.log('Populating month dropdown');
             monthDropdownMenu.innerHTML = '';
             const monthNames = ["Tháng Một", "Tháng Hai", "Tháng Ba", "Tháng Tư", "Tháng Năm", "Tháng Sáu", "Tháng Bảy", "Tháng Tám", "Tháng Chín", "Tháng Mười", "Tháng Mười Một", "Tháng Mười Hai"];
             
@@ -376,7 +394,7 @@
                 monthItem.textContent = monthNames[i];
                 
                 monthItem.addEventListener('click', (e) => {
-                    e.preventDefault();
+                    epreventDefault();
                     currentMonth = i;
                     updateMonthYearDisplay();
                     renderCalendar();
@@ -415,6 +433,7 @@
 
         // Mở modal danh sách ghi chú
         function openNotesListModal(day) {
+            console.log('Opening notes list modal for day', day);
             selectedDate = new Date(currentYear, currentMonth, day);
             const dateKey = `${currentYear}-${currentMonth + 1}-${day}`;
             
@@ -431,7 +450,7 @@
                 // Thêm từng ghi chú vào danh sách
                 notes[dateKey].forEach((note, index) => {
                     const noteElement = document.createElement('div');
-                    noteElement.className = 'note-item p-3 mb-2 rounded-lg flex justify-between items-center';
+                    noteElement.className = 'note-item p-3 mb-2 rounded-lg flex justify-between items-start note-text';
                     
                     // Đặt màu nền dựa trên mức độ ưu tiên
                     if (note.priority === 'low') noteElement.classList.add('bg-green-100', 'dark:bg-green-900');
@@ -447,16 +466,16 @@
                     else if (note.type === 'personal') iconClass = 'fas fa-user';
                     
                     noteElement.innerHTML = `
-                        <div>
+                        <div class="flex-1 note-text">
                             <div class="flex items-center">
                                 <i class="${iconClass} mr-2"></i>
                                 <span class="font-medium">${note.type === 'event' ? 'Sự Kiện' : note.type === 'task' ? 'Nhiệm Vụ' : note.type === 'study' ? 'Học Tập' : note.type === 'reminder' ? 'Nhắc Nhở' : 'Cá Nhân'}</span>
                             </div>
                             <div class="text-sm mt-1">
                                 ${note.time ? `<span class="font-semibold">${note.time}</span> - ` : ''}
-                                ${note.text.substring(0, 30)}${note.text.length > 30 ? '...' : ''}
+                                ${note.text}
                             </div>
-                            ${note.location ? `<div class="text-sm mt-1"><i class="fas fa-map-marker-alt mr-1"></i>${note.location.substring(0, 20)}${note.location.length > 20 ? '...' : ''}</div>` : ''}
+                            ${note.location ? `<div class="text-sm mt-1"><i class="fas fa-map-marker-alt mr-1"></i>${note.location}</div>` : ''}
                         </div>
                         <button class="edit-note-btn p-1 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400">
                             <i class="fas fa-edit"></i>
@@ -479,6 +498,7 @@
 
         // Mở modal ghi chú để chỉnh sửa
         function openNoteModalForEdit(day, noteIndex) {
+            console.log('Opening note modal for edit, day:', day, 'noteIndex:', noteIndex);
             currentlyEditingNoteIndex = noteIndex;
             const dateKey = `${currentYear}-${currentMonth + 1}-${day}`;
             const note = notes[dateKey][noteIndex];
@@ -500,6 +520,7 @@
 
         // Mở modal ghi chú để tạo mới
         function openNoteModalForNew(day) {
+            console.log('Opening note modal for new note, day:', day);
             currentlyEditingNoteIndex = null;
             selectedDate = new Date(currentYear, currentMonth, day);
             
@@ -520,14 +541,18 @@
 
         // Lưu ghi chú
         function saveNote() {
-            if (!selectedDate) return;
+            console.log('Saving note, selectedDate:', selectedDate);
+            if (!selectedDate) {
+                console.error('No selected date');
+                return;
+            }
             
             const dateKey = `${selectedDate.getFullYear()}-${selectedDate.getMonth() + 1}-${selectedDate.getDate()}`;
             const noteContent = noteText.value.trim();
             
             if (noteContent) {
                 // Lấy mức độ ưu tiên đã chọn
-                const priority = document.querySelector('input[name="priority"]:checked').value;
+                const priority = document.querySelector('input[name="priority"]:checked')?.value || 'medium';
                 
                 const newNote = {
                     type: noteType.value,
@@ -557,7 +582,11 @@
                     return 0;
                 });
                 
-                localStorage.setItem(`advancedTimeManagerNotes_${currentUser}`, JSON.stringify(notes));
+                try {
+                    localStorage.setItem(`advancedTimeManagerNotes_${currentUser}`, JSON.stringify(notes));
+                } catch (e) {
+                    console.error('Error saving notes to localStorage:', e);
+                }
             }
             
             renderCalendar();
@@ -567,19 +596,30 @@
 
         // Xóa ghi chú
         function deleteNote() {
-            if (!selectedDate || currentlyEditingNoteIndex === null) return;
+            console.log('Deleting note, selectedDate:', selectedDate, 'noteIndex:', currentlyEditingNoteIndex);
+            if (!selectedDate || currentlyEditingNoteIndex === null) {
+                console.error('Cannot delete: No selected date or note index');
+                return;
+            }
             
             const dateKey = `${selectedDate.getFullYear()}-${selectedDate.getMonth() + 1}-${selectedDate.getDate()}`;
             
             // Xóa ghi chú tại chỉ số hiện tại
-            notes[dateKey].splice(currentlyEditingNoteIndex, 1);
-            
-            // Nếu không còn ghi chú cho ngày này, xóa khóa ngày
-            if (notes[dateKey].length === 0) {
-                delete notes[dateKey];
+            if (notes[dateKey]) {
+                notes[dateKey].splice(currentlyEditingNoteIndex, 1);
+                
+                // Nếu không còn ghi chú cho ngày này, xóa khóa ngày
+                if (notes[dateKey].length === 0) {
+                    delete notes[dateKey];
+                }
+                
+                try {
+                    localStorage.setItem(`advancedTimeManagerNotes_${currentUser}`, JSON.stringify(notes));
+                } catch (e) {
+                    console.error('Error saving notes to localStorage:', e);
+                }
             }
             
-            localStorage.setItem(`advancedTimeManagerNotes_${currentUser}`, JSON.stringify(notes));
             renderCalendar();
             noteModal.classList.add('hidden');
             currentlyEditingNoteIndex = null;
@@ -587,6 +627,7 @@
 
         // Đăng xuất
         logoutButton.addEventListener('click', () => {
+            console.log('Logging out');
             localStorage.removeItem('nmd_current_user');
             localStorage.removeItem('nmd_remember_token');
             window.location.href = 'login.html';
@@ -594,6 +635,7 @@
 
         // Các sự kiện lắng nghe
         prevMonthBtn.addEventListener('click', () => {
+            console.log('Navigating to previous month');
             if (currentMonth === 0) {
                 currentMonth = 11;
                 currentYear--;
@@ -605,6 +647,7 @@
         });
 
         nextMonthBtn.addEventListener('click', () => {
+            console.log('Navigating to next month');
             if (currentMonth === 11) {
                 currentMonth = 0;
                 currentYear++;
@@ -616,52 +659,62 @@
         });
 
         monthDropdown.addEventListener('click', () => {
+            console.log('Toggling month dropdown');
             monthDropdownMenu.classList.toggle('hidden');
         });
 
         saveNoteBtn.addEventListener('click', saveNote);
         deleteNoteBtn.addEventListener('click', deleteNote);
         closeNoteModal.addEventListener('click', () => {
+            console.log('Closing note modal');
             noteModal.classList.add('hidden');
             currentlyEditingNoteIndex = null;
         });
 
         noteModal.addEventListener('click', (e) => {
             if (e.target === noteModal) {
+                console.log('Closing note modal by clicking overlay');
                 noteModal.classList.add('hidden');
                 currentlyEditingNoteIndex = null;
             }
         });
 
         closeNotesListModal.addEventListener('click', () => {
+            console.log('Closing notes list modal');
             notesListModal.classList.add('hidden');
         });
 
         closeNotesList.addEventListener('click', () => {
+            console.log('Closing notes list modal via close button');
             notesListModal.classList.add('hidden');
         });
 
         addNewNote.addEventListener('click', () => {
+            console.log('Adding new note');
             const day = selectedDate.getDate();
             openNoteModalForNew(day);
         });
 
         notesListModal.addEventListener('click', (e) => {
             if (e.target === notesListModal) {
+                console.log('Closing notes list modal by clicking overlay');
                 notesListModal.classList.add('hidden');
             }
         });
 
         darkModeToggle.addEventListener('click', () => {
+            console.log('Toggling dark mode');
             document.documentElement.classList.toggle('dark');
             localStorage.setItem('darkMode', document.documentElement.classList.contains('dark'));
         });
 
         financeNavButton.addEventListener('click', () => {
+            console.log('Navigating to finance page');
             window.location.href = 'finance.html';
         });
 
         if (localStorage.getItem('darkMode') === 'true') {
+            console.log('Applying dark mode from localStorage');
             document.documentElement.classList.add('dark');
         }
 
