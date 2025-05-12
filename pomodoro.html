@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NMD TimeManagement - Pomodoro</title>
+    <link rel="icon" type="image/png" href="img/logo2.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            100: '#1a1a1a',
+                            200: '#2d2d2d',
+                            300: '#3d3d3d',
+                            400: '#4d4d4d',
+                        },
+                        priority: {
+                            low: '#4ade80',
+                            medium: '#fbbf24',
+                            high: '#f87171',
+                            urgent: '#ef4444'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .pomodoro-button {
+            transition: all 0.2s ease;
+        }
+        .pomodoro-button:hover {
+            transform: scale(1.05);
+        }
+        .timer-display {
+            font-size: 4rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+        .task-select {
+            transition: all 0.2s ease;
+        }
+        .task-select:hover {
+            background-color: #e5e7eb;
+        }
+        .dark .task-select:hover {
+            background-color: #4d4d4d;
+        }
+        .priority-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-dark-100 text-gray-800 dark:text-gray-200 min-h-screen transition-colors duration-300">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
+                <i class="fas fa-clock mr-2"></i> NMD TimeManagement - Pomodoro
+            </h1>
+            <div class="flex items-center space-x-4">
+                <button id="calendarNavButton" class="px-4 py-2 bg-indigo-600 dark:bg-indigo-700 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors">
+                    <i class="fas fa-calendar mr-2"></i> Quản Lý Thời Gian
+                </button>
+                <button id="financeNavButton" class="px-4 py-2 bg-green-500 dark:bg-green-600 text-white rounded-lg hover:bg-green-600 dark:hover:bg-green-500 transition-colors">
+                    <i class="fas fa-wallet mr-2"></i> Quản Lý Tài Chính
+                </button>
+                <button id="darkModeToggle" class="p-2 rounded-full bg-gray-200 dark:bg-dark-300 hover:bg-gray-300 dark:hover:bg-dark-400 transition-colors">
+                    <i class="fas fa-moon dark:hidden"></i>
+                    <i class="fas fa-sun hidden dark:block"></i>
+                </button>
+                <button id="logoutButton" class="px-4 py-2 bg-red-500 dark:bg-red-600 text-white rounded-lg hover:bg-red-600 dark:hover:bg-red-500 transition-colors">
+                    <i class="fas fa-sign-out-alt mr-2"></i> Đăng Xuất
+                </button>
+            </div>
+        </header>
+
+        <!-- Pomodoro Timer -->
+        <div class="bg-white dark:bg-dark-200 rounded-lg shadow-lg p-6 max-w-md mx-auto fade-in">
+            <h2 class="text-2xl font-semibold mb-4 text-center">Pomodoro Timer</h2>
+            
+            <!-- Task Selection -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">Chọn Nhiệm Vụ</label>
+                <select id="taskSelect" class="task-select w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300">
+                    <option value="">Không chọn nhiệm vụ</option>
+                    <option value="study">Học Tập</option>
+                    <option value="work">Làm Việc</option>
+                    <!-- Tasks will be populated by JS -->
+                </select>
+            </div>
+
+            <!-- Timer Display -->
+            <div id="timerDisplay" class="timer-display text-center mb-4">25:00</div>
+            <div id="sessionType" class="text-center text-lg mb-4">Work Session</div>
+
+            <!-- Timer Controls -->
+            <div class="flex justify-center space-x-4">
+                <button id="startPauseButton" class="pomodoro-button px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+                    <i class="fas fa-play mr-2"></i> Bắt Đầu
+                </button>
+                <button id="resetButton" class="pomodoro-button px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+                    <i class="fas fa-redo mr-2"></i> Đặt Lại
+                </button>
+            </div>
+
+            <!-- Session Counter -->
+            <div class="text-center mt-4">
+                <p>Số chu kỳ hoàn thành: <span id="cycleCount">0</span></p>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div id="settingsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white dark:bg-dark-200 rounded-lg p-6 w-full max-w-md fade-in">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold">Cài Đặt Pomodoro</h3>
+                    <button id="closeSettingsModal" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1">Thời Gian Làm Việc (phút)</label>
+                    <input type="number" id="workDuration" min="1" value="25" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1">Thời Gian Nghỉ Ngắn (phút)</label>
+                    <input type="number" id="shortBreakDuration" min="1" value="5" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1">Thời Gian Nghỉ Dài (phút)</label>
+                    <input type="number" id="longBreakDuration" min="1" value="15" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300">
+                </div>
+                <div class="flex justify-end">
+                    <button id="saveSettings" class="px-4 py-2 bg-indigo-600 dark:bg-indigo-700 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors">
+                        Lưu
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Authentication check
+        const currentUser = localStorage.getItem('nmd_current_user');
+        const savedToken = localStorage.getItem('nmd_remember_token');
+        const users = JSON.parse(localStorage.getItem('nmd_users')) || {};
+        if (!currentUser || (savedToken && !users[currentUser]) || (savedToken && users[currentUser].token !== savedToken)) {
+            console.log('Authentication failed, redirecting to login');
+            window.location.href = 'login.html';
+        }
+
+        // DOM elements
+        const timerDisplay = document.getElementById('timerDisplay');
+        const sessionType = document.getElementById('sessionType');
+        const startPauseButton = document.getElementById('startPauseButton');
+        const resetButton = document.getElementById('resetButton');
+        const cycleCount = document.getElementById('cycleCount');
+        const taskSelect = document.getElementById('taskSelect');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const calendarNavButton = document.getElementById('calendarNavButton');
+        const financeNavButton = document.getElementById('financeNavButton');
+        const logoutButton = document.getElementById('logoutButton');
+        const settingsModal = document.getElementById('settingsModal');
+        const closeSettingsModal = document.getElementById('closeSettingsModal');
+        const workDuration = document.getElementById('workDuration');
+        const shortBreakDuration = document.getElementById('shortBreakDuration');
+        const longBreakDuration = document.getElementById('longBreakDuration');
+        const saveSettings = document.getElementById('saveSettings');
+
+        // Pomodoro state
+        let isRunning = false;
+        let isWorkSession = true;
+        let currentTime = 25 * 60; // Default work duration in seconds
+        let interval = null;
+        let completedCycles = 0;
+        let settings = {
+            work: 25,
+            shortBreak: 5,
+            longBreak: 15
+        };
+        let notes = {};
+
+        // Load notes and settings
+        try {
+            notes = JSON.parse(localStorage.getItem(`advancedTimeManagerNotes_${currentUser}`)) || {};
+            const savedSettings = localStorage.getItem(`pomodoroSettings_${currentUser}`);
+            if (savedSettings) {
+                settings = JSON.parse(savedSettings);
+                currentTime = settings.work * 60;
+            }
+        } catch (e) {
+            console.error('Error loading from localStorage:', e);
+        }
+
+        // Initialize timer display
+        updateTimerDisplay();
+
+        // Populate task dropdown
+        function populateTaskDropdown() {
+            // Static options are defined in HTML, so only append dynamic tasks
+            Object.keys(notes).forEach(dateKey => {
+                notes[dateKey].forEach(note => {
+                    if (note.type === 'task') {
+                        const option = document.createElement('option');
+                        option.value = `${dateKey}|${note.text}`;
+                        option.innerHTML = `
+                            <span class="priority-dot bg-priority-${note.priority}"></span>
+                            Nhiệm Vụ: ${note.text} (${dateKey})
+                        `;
+                        taskSelect.appendChild(option);
+                    }
+                });
+            });
+        }
+
+        // Update timer display
+        function updateTimerDisplay() {
+            const minutes = Math.floor(currentTime / 60);
+            const seconds = currentTime % 60;
+            timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // Start or pause timer
+        function toggleTimer() {
+            if (isRunning) {
+                clearInterval(interval);
+                startPauseButton.innerHTML = '<i class="fas fa-play mr-2"></i> Tiếp Tục';
+                isRunning = false;
+            } else {
+                interval = setInterval(() => {
+                    currentTime--;
+                    updateTimerDisplay();
+                    if (currentTime <= 0) {
+                        completeSession();
+                    }
+                }, 1000);
+                startPauseButton.innerHTML = '<i class="fas fa-pause mr-2"></i> Tạm Dừng';
+                isRunning = true;
+            }
+        }
+
+        // Complete a session
+        function completeSession() {
+            clearInterval(interval);
+            isRunning = false;
+            if (isWorkSession) {
+                completedCycles++;
+                cycleCount.textContent = completedCycles;
+                isWorkSession = false;
+                sessionType.textContent = completedCycles % 4 === 0 ? 'Long Break' : 'Short Break';
+                currentTime = (completedCycles % 4 === 0 ? settings.longBreak : settings.shortBreak) * 60;
+            } else {
+                isWorkSession = true;
+                sessionType.textContent = 'Work Session';
+                currentTime = settings.work * 60;
+            }
+            updateTimerDisplay();
+            startPauseButton.innerHTML = '<i class="fas fa-play mr-2"></i> Bắt Đầu';
+            // Play notification sound
+            new Audio('https://www.soundjay.com/buttons/beep-01a.mp3').play();
+        }
+
+        // Reset timer
+        function resetTimer() {
+            clearInterval(interval);
+            isRunning = false;
+            isWorkSession = true;
+            currentTime = settings.work * 60;
+            sessionType.textContent = 'Work Session';
+            updateTimerDisplay();
+            startPauseButton.innerHTML = '<i class="fas fa-play mr-2"></i> Bắt Đầu';
+        }
+
+        // Save settings
+        function saveSettingsHandler() {
+            settings.work = parseInt(workDuration.value) || 25;
+            settings.shortBreak = parseInt(shortBreakDuration.value) || 5;
+            settings.longBreak = parseInt(longBreakDuration.value) || 15;
+            try {
+                localStorage.setItem(`pomodoroSettings_${currentUser}`, JSON.stringify(settings));
+            } catch (e) {
+                console.error('Error saving settings to localStorage:', e);
+            }
+            resetTimer();
+            settingsModal.classList.add('hidden');
+        }
+
+        // Event listeners
+        startPauseButton.addEventListener('click', toggleTimer);
+        resetButton.addEventListener('click', resetTimer);
+        darkModeToggle.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('darkMode', document.documentElement.classList.contains('dark'));
+        });
+        calendarNavButton.addEventListener('click', () => {
+            window.location.href = 'index.html';
+        });
+        financeNavButton.addEventListener('click', () => {
+            window.location.href = 'finance.html';
+        });
+        logoutButton.addEventListener('click', () => {
+            localStorage.removeItem('nmd_current_user');
+            localStorage.removeItem('nmd_remember_token');
+            window.location.href = 'login.html';
+        });
+        closeSettingsModal.addEventListener('click', () => {
+            settingsModal.classList.add('hidden');
+        });
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) {
+                settingsModal.classList.add('hidden');
+            }
+        });
+        saveSettings.addEventListener('click', saveSettingsHandler);
+        timerDisplay.addEventListener('click', () => {
+            workDuration.value = settings.work;
+            shortBreakDuration.value = settings.shortBreak;
+            longBreakDuration.value = settings.longBreak;
+            settingsModal.classList.remove('hidden');
+        });
+
+        // Apply dark mode if saved
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark');
+        }
+
+        // Initialize
+        populateTaskDropdown();
+    </script>
+</body>
+</html>

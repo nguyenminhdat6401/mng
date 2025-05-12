@@ -68,9 +68,13 @@
                 <i class="fas fa-wallet mr-2"></i> NMD FinanceManagement
             </h1>
             <div class="flex items-center space-x-4">
+                <button id="pomodoroNavButton" class="px-4 py-2 bg-blue-500 dark:bg-blue-600 text-white rounded-lg hover:bg-blue-600 dark:hover:bg-blue-500 transition-colors">
+                    <i class="fas fa-hourglass-start mr-2"></i> Pomodoro
+                </button>
                 <button id="timeNavButton" class="px-4 py-2 bg-indigo-600 dark:bg-indigo-700 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors">
                     <i class="fas fa-clock mr-2"></i> Quản Lý Thời Gian
                 </button>
+                
                 <button id="darkModeToggle" class="p-2 rounded-full bg-gray-200 dark:bg-dark-300 hover:bg-gray-300 dark:hover:bg-dark-400 transition-colors">
                     <i class="fas fa-moon dark:hidden"></i>
                     <i class="fas fa-sun hidden dark:block"></i>
@@ -190,7 +194,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-1">Ngày</label>
-                        <input type="date" id="editTransactionAmount" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300">
+                        <input type="date" id="editTransactionDate" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300">
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-1">Ghi Chú</label>
@@ -231,7 +235,16 @@
     </div>
 
     <script>
-        let transactions = JSON.parse(localStorage.getItem('financeManagerTransactions')) || [];
+        // Check authentication
+        const currentUser = localStorage.getItem('nmd_current_user');
+        const savedToken = localStorage.getItem('nmd_remember_token');
+        const users = JSON.parse(localStorage.getItem('nmd_users')) || {};
+        if (!currentUser || (savedToken && !users[currentUser]) || (savedToken && users[currentUser].token !== savedToken)) {
+            console.log('Authentication failed, redirecting to login');
+            window.location.href = 'login.html';
+        }
+
+        let transactions = JSON.parse(localStorage.getItem(`financeManagerTransactions_${currentUser}`)) || [];
         let editingTransactionIndex = null;
 
         // DOM Elements
@@ -256,6 +269,7 @@
         const editTransactionNote = document.getElementById('editTransactionNote');
         const darkModeToggle = document.getElementById('darkModeToggle');
         const timeNavButton = document.getElementById('timeNavButton');
+        const pomodoroNavButton = document.getElementById('pomodoroNavButton');
         const resetTransactions = document.getElementById('resetTransactions');
         const resetConfirmModal = document.getElementById('resetConfirmModal');
         const closeResetModal = document.getElementById('closeResetModal');
@@ -348,7 +362,7 @@
         // Reset all transactions
         function resetAllTransactions() {
             transactions = [];
-            localStorage.setItem('financeManagerTransactions', JSON.stringify(transactions));
+            localStorage.setItem(`financeManagerTransactions_${currentUser}`, JSON.stringify(transactions));
             updateSummary();
             renderTransactionList();
             closeResetConfirmModal();
@@ -388,7 +402,7 @@
                 transactions.push(transaction);
             }
 
-            localStorage.setItem('financeManagerTransactions', JSON.stringify(transactions));
+            localStorage.setItem(`financeManagerTransactions_${currentUser}`, JSON.stringify(transactions));
             updateSummary();
             renderTransactionList();
             transactionModal.classList.add('hidden');
@@ -400,7 +414,7 @@
             if (editingTransactionIndex === null) return;
 
             transactions.splice(editingTransactionIndex, 1);
-            localStorage.setItem('financeManagerTransactions', JSON.stringify(transactions));
+            localStorage.setItem(`financeManagerTransactions_${currentUser}`, JSON.stringify(transactions));
             updateSummary();
             renderTransactionList();
             transactionModal.classList.add('hidden');
@@ -422,7 +436,7 @@
             };
 
             transactions.push(transaction);
-            localStorage.setItem('financeManagerTransactions', JSON.stringify(transactions));
+            localStorage.setItem(`financeManagerTransactions_${currentUser}`, JSON.stringify(transactions));
             updateSummary();
             renderTransactionList();
 
@@ -457,7 +471,13 @@
             window.location.href = 'index.html';
         });
 
+        pomodoroNavButton.addEventListener('click', () => {
+            window.location.href = 'pomodoro.html';
+        });
+
         logoutButton.addEventListener('click', () => {
+            localStorage.removeItem('nmd_current_user');
+            localStorage.removeItem('nmd_remember_token');
             window.location.href = 'login.html';
         });
 
