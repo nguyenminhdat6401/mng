@@ -192,7 +192,7 @@
 
                 <div class="mb-4">
                     <label class="block text-sm font-medium mb-1">Địa Điểm (tùy chọn)</label>
-                    <input type="text" id="noteLocation" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300" placeholder="Nhập địa điểm...">
+                    <input type="text" id="formNoteLocation" class="w-full p-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300" placeholder="Nhập địa điểm...">
                 </div>
                 
                 <textarea id="noteText" class="w-full h-32 p-3 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-300 mb-4" placeholder="Thêm ghi chú chi tiết tại đây..."></textarea>
@@ -223,9 +223,14 @@
                 </div>
                 
                 <div class="flex justify-between">
-                    <button id="addNewNote" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
-                        <i class="fas fa-plus mr-1"></i> Thêm Mới
-                    </button>
+                    <div class="flex space-x-2">
+                        <button id="addNewNote" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+                            <i class="fas fa-plus mr-1"></i> Thêm Mới
+                        </button>
+                        <button id="pasteNote" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors hidden">
+                            <i class="fas fa-paste mr-1"></i> Dán
+                        </button>
+                    </div>
                     <button id="closeNotesList" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors">
                         Đóng
                     </button>
@@ -257,6 +262,7 @@
             notes = {};
         }
         let currentlyEditingNoteIndex = null;
+        let copiedNote = null; // Lưu ghi chú đã sao chép
 
         // Các phần tử DOM
         const calendarGrid = document.getElementById('calendarGrid');
@@ -271,7 +277,7 @@
         const noteText = document.getElementById('noteText');
         const noteType = document.getElementById('noteType');
         const noteTime = document.getElementById('noteTime');
-        const noteLocation = document.getElementById('noteLocation');
+        const noteLocation = document.getElementById('formNoteLocation');
         const saveNoteBtn = document.getElementById('saveNote');
         const deleteNoteBtn = document.getElementById('deleteNote');
         const closeNoteModal = document.getElementById('closeNoteModal');
@@ -282,12 +288,13 @@
         const closeNotesListModal = document.getElementById('closeNotesListModal');
         const closeNotesList = document.getElementById('closeNotesList');
         const addNewNote = document.getElementById('addNewNote');
+        const pasteNoteBtn = document.getElementById('pasteNote');
         const financeNavButton = document.getElementById('financeNavButton');
         const pomodoroNavButton = document.getElementById('pomodoroNavButton');
         const logoutButton = document.getElementById('logoutButton');
 
         // Kiểm tra DOM elements
-        if (!calendarGrid || !saveNoteBtn || !deleteNoteBtn || !darkModeToggle || !pomodoroNavButton) {
+        if (!calendarGrid || !saveNoteBtn || !deleteNoteBtn || !darkModeToggle || !pomodoroNavButton || !pasteNoteBtn) {
             console.error('One or more DOM elements not found');
         }
 
@@ -320,7 +327,7 @@
             const prevMonthLastDay = new Date(currentYear, currentMonth, 0).getDate();
             for (let i = 0; i < startingDay; i++) {
                 const dayElement = document.createElement('div');
-                dayElement.className = 'calendar-day p-2 h-32 border rounded-lg bg-gray-50 dark:bg-dark-300 text-gray-400 dark:text-gray-500';
+                dayElement.className = 'calendar沿-day p-2 h-32 border rounded-lg bg-gray-50 dark:bg-dark-300 text-gray-400 dark:text-gray-500';
                 dayElement.textContent = prevMonthLastDay - startingDay + i + 1;
                 calendarGrid.appendChild(dayElement);
             }
@@ -397,7 +404,7 @@
             for (let i = 0; i < 12; i++) {
                 const monthItem = document.createElement('a');
                 monthItem.href = '#';
-                monthItem.className ='block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-300';
+                monthItem.className = 'block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-300';
                 monthItem.textContent = monthNames[i];
                 
                 monthItem.addEventListener('click', (e) => {
@@ -450,6 +457,13 @@
             // Xóa các ghi chú cũ
             notesListContainer.innerHTML = '';
             
+            // Kiểm tra và hiển thị nút dán
+            if (copiedNote) {
+                pasteNoteBtn.classList.remove('hidden');
+            } else {
+                pasteNoteBtn.classList.add('hidden');
+            }
+            
             // Nếu không có ghi chú cho ngày này, hiển thị thông báo
             if (!notes[dateKey] || notes[dateKey].length === 0) {
                 notesListContainer.innerHTML = '<p class="text-center text-gray-500 py-4">Không có ghi chú cho ngày này</p>';
@@ -484,9 +498,14 @@
                             </div>
                             ${note.location ? `<div class="text-sm mt-1"><i class="fas fa-map-marker-alt mr-1"></i>${note.location}</div>` : ''}
                         </div>
-                        <button class="edit-note-btn p-1 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400">
-                            <i class="fas fa-edit"></i>
-                        </button>
+                        <div class="flex space-x-2">
+                            <button class="edit-note-btn p-1 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400" data-index="${index}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="copy-note-btn p-1 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400" data-index="${index}">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
                     `;
                     
                     // Thêm chức năng chỉnh sửa
@@ -496,11 +515,81 @@
                         openNoteModalForEdit(day, index);
                     });
                     
+                    // Thêm chức năng sao chép
+                    const copyBtn = noteElement.querySelector('.copy-note-btn');
+                    copyBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        copyNote(day, index);
+                    });
+                    
                     notesListContainer.appendChild(noteElement);
                 });
             }
             
             notesListModal.classList.remove('hidden');
+        }
+
+        // Sao chép ghi chú
+        function copyNote(day, noteIndex) {
+            console.log('Copying note, day:', day, 'noteIndex:', noteIndex);
+            const dateKey = `${currentYear}-${currentMonth + 1}-${day}`;
+            if (notes[dateKey] && notes[dateKey][noteIndex]) {
+                copiedNote = JSON.parse(JSON.stringify(notes[dateKey][noteIndex])); // Deep copy
+                console.log('Note copied:', copiedNote);
+                // Cập nhật trạng thái nút dán
+                pasteNoteBtn.classList.remove('hidden');
+            } else {
+                console.error('Note not found for copying');
+            }
+        }
+
+        // Dán ghi chú
+        function pasteNote() {
+            console.log('Pasting note, selectedDate:', selectedDate);
+            if (!selectedDate || !copiedNote) {
+                console.error('No selected date or no copied note');
+                return;
+            }
+            
+            const dateKey = `${selectedDate.getFullYear()}-${selectedDate.getMonth() + 1}-${selectedDate.getDate()}`;
+            
+            // Kiểm tra xem ghi chú đã tồn tại chưa (so sánh text và time)
+            let isDuplicate = false;
+            if (notes[dateKey]) {
+                isDuplicate = notes[dateKey].some(note => 
+                    note.text === copiedNote.text && note.time === copiedNote.time
+                );
+            }
+            
+            if (isDuplicate) {
+                alert('Ghi chú này đã tồn tại vào ngày này.');
+                return;
+            }
+            
+            // Khởi tạo mảng ghi chú cho ngày này nếu chưa có
+            if (!notes[dateKey]) {
+                notes[dateKey] = [];
+            }
+            
+            // Thêm ghi chú đã sao chép
+            notes[dateKey].push(JSON.parse(JSON.stringify(copiedNote))); // Deep copy
+            
+            // Sắp xếp ghi chú theo thời gian nếu có
+            notes[dateKey].sort((a, b) => {
+                if (a.time && b.time) return a.time.localeCompare(b.time);
+                return 0;
+            });
+            
+            try {
+                localStorage.setItem(`advancedTimeManagerNotes_${currentUser}`, JSON.stringify(notes));
+                console.log('Note pasted successfully to', dateKey);
+            } catch (e) {
+                console.error('Error saving pasted note to localStorage:', e);
+            }
+            
+            // Cập nhật lịch và modal danh sách ghi chú
+            renderCalendar();
+            openNotesListModal(selectedDate.getDate());
         }
 
         // Mở modal ghi chú để chỉnh sửa
@@ -701,6 +790,8 @@
             const day = selectedDate.getDate();
             openNoteModalForNew(day);
         });
+
+        pasteNoteBtn.addEventListener('click', pasteNote);
 
         notesListModal.addEventListener('click', (e) => {
             if (e.target === notesListModal) {
