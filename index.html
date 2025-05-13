@@ -43,14 +43,36 @@
         .fade-in {
             animation: fadeIn 0.3s ease-in-out;
         }
+        /* Màu lịch trong light mode */
+        .calendar-day {
+            border-color: #d1d5db; /* border-gray-300 */
+            background-color: #ffffff; /* bg-white */
+            color: #1f2937; /* text-gray-800 */
+        }
+        /* Màu lịch trong dark mode */
         .dark .calendar-day {
-            border-color: #4d4d4d;
+            border-color: #4d4d4d; /* border-dark-300 */
+            background-color: #2d2d2d; /* bg-dark-200 */
+            color: #e5e7eb; /* text-gray-200 */
         }
         .dark .calendar-day:hover {
-            background-color: #3d3d3d;
+            background-color: #3d3d3d; /* bg-dark-300 */
+        }
+        /* Ngày không thuộc tháng hiện tại */
+        .calendar-day.text-gray-400 {
+            background-color: #f9fafb; /* bg-gray-50 */
+            color: #9ca3af; /* text-gray-400 */
+        }
+        .dark .calendar-day.text-gray-400 {
+            background-color: #3d3d3d; /* bg-dark-300 */
+            color: #6b7280; /* text-gray-500 */
+        }
+        /* Đảm bảo ngày hiện tại có viền đúng */
+        .border-indigo-500 {
+            border-color: #6366f1 !important; /* indigo-500 */
         }
         .dark .border-indigo-500 {
-            border-color: #ffffff !important;
+            border-color: #ffffff !important; /* White border in dark mode */
         }
         .priority-dot {
             width: 10px;
@@ -89,6 +111,10 @@
         .real-time-clock {
             font-family: monospace;
             font-size: 1.75rem;
+        }
+        /* Màu chữ cho các ghi chú */
+        .note-text {
+            color: #111827; /* text-gray-900 */
         }
     </style>
 </head>
@@ -380,13 +406,13 @@
                     
                     notes[dateKey].forEach(note => {
                         const noteElement = document.createElement('div');
-                        noteElement.className = 'text-xs p-1 rounded note-text';
+                        noteElement.className = 'text-xs p-1 rounded note-text text-gray-900';
                         
-                        // Đặt màu nền dựa trên mức độ ưu tiên
-                        if (note.priority === 'low') noteElement.classList.add('bg-green-100', 'dark:bg-green-900');
-                        else if (note.priority === 'medium') noteElement.classList.add('bg-yellow-100', 'dark:bg-yellow-900');
-                        else if (note.priority === 'high') noteElement.classList.add('bg-red-100', 'dark:bg-red-900');
-                        else if (note.priority === 'urgent') noteElement.classList.add('bg-red-200', 'dark:bg-red-800');
+                        // Đặt màu nền dựa trên mức độ ưu tiên, chỉ dùng màu light mode
+                        if (note.priority === 'low') noteElement.classList.add('bg-green-100');
+                        else if (note.priority === 'medium') noteElement.classList.add('bg-yellow-100');
+                        else if (note.priority === 'high') noteElement.classList.add('bg-red-100');
+                        else if (note.priority === 'urgent') noteElement.classList.add('bg-red-200');
                         
                         // Thêm biểu tượng dựa trên loại ghi chú
                         let iconClass = 'fas fa-calendar';
@@ -499,13 +525,13 @@
                 // Thêm từng ghi chú vào danh sách
                 notes[dateKey].forEach((note, index) => {
                     const noteElement = document.createElement('div');
-                    noteElement.className = 'note-item p-3 mb-2 rounded-lg flex justify-between items-start note-text';
+                    noteElement.className = 'note-item p-3 mb-2 rounded-lg flex justify-between items-start note-text text-gray-900';
                     
-                    // Đặt màu nền dựa trên mức độ ưu tiên
-                    if (note.priority === 'low') noteElement.classList.add('bg-green-100', 'dark:bg-green-900');
-                    else if (note.priority === 'medium') noteElement.classList.add('bg-yellow-100', 'dark:bg-yellow-900');
-                    else if (note.priority === 'high') noteElement.classList.add('bg-red-100', 'dark:bg-red-900');
-                    else if (note.priority === 'urgent') noteElement.classList.add('bg-red-200', 'dark:bg-red-800');
+                    // Đặt màu nền dựa trên mức độ ưu tiên, chỉ dùng màu light mode
+                    if (note.priority === 'low') noteElement.classList.add('bg-green-100');
+                    else if (note.priority === 'medium') noteElement.classList.add('bg-yellow-100');
+                    else if (note.priority === 'high') noteElement.classList.add('bg-red-100');
+                    else if (note.priority === 'urgent') noteElement.classList.add('bg-red-200');
                     
                     // Thêm biểu tượng dựa trên loại ghi chú
                     let iconClass = 'fas fa-calendar';
