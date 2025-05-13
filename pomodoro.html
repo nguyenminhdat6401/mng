@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NMD TimeManagement - Pomodoro</title>
+    <title>NMD Pomodoro</title>
     <link rel="icon" type="image/png" href="img/logo2.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -65,14 +65,21 @@
             display: inline-block;
             margin-right: 4px;
         }
+        .gradient-title {
+            background: linear-gradient(to right, #4f46e5, #a855f7);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-dark-100 text-gray-800 dark:text-gray-200 min-h-screen transition-colors duration-300">
     <div class="container mx-auto px-4 py-8">
         <!-- Header -->
         <header class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
-                <i class="fas fa-clock mr-2"></i> NMD TimeManagement - Pomodoro
+            <h1 class="text-3xl font-bold">
+                <i class="fas fa-clock mr-2 text-indigo-600 dark:text-indigo-400"></i>
+                <span class="gradient-title">NMD Pomodoro</span>
             </h1>
             <div class="flex items-center space-x-4">
                 <button id="calendarNavButton" class="px-4 py-2 bg-indigo-600 dark:bg-indigo-700 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors">
